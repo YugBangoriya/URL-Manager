@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>URL Manager</title>
+
+  <!-- Google Fonts: Syne · DM Mono · DM Sans (PRD spec) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    /* ══════════════════════════════════════════════════════════════════
+       DESIGN TOKENS  ·  Exact values from PRD — do not change
+    ══════════════════════════════════════════════════════════════════ */
+    :root {
+      --bg:    #020101;
+      --sb:    #0c0504;
+      --card:  #110605;
+      --card2: #160807;
+      --b1:    #1e0e09;
+      --b2:    #2d1610;
+      --rust:  #b7410e;
+      --rust2: #d4531a;
+      --amber: #e07b2a;
+      --white: #ffffff;
+      --dim:   rgba(255,255,255,.55);
+      --muted: rgba(255,255,255,.28);
+      --faint: rgba(255,255,255,.10);
+      --green: #5faa3e;
+      --blue:  #4a9ebb;
+    }
+
+    /* Light mode overrides — colour toggled in Phase 4 */
+    body.light {
+      --bg:    #ffffff;
+      --sb:    #f5f5f5;
+      --card:  #f9f9f9;
+      --card2: #f0f0f0;
+      --b1:    #e0e0e0;
+      --b2:    #cccccc;
+      --white: #1a1a1a;
+      --dim:   rgba(0,0,0,.65);
+      --muted: rgba(0,0,0,.40);
+      --faint: rgba(0,0,0,.07);
+      /* --rust, --rust2, --amber, --green, --blue: unchanged */
+    }
+
+    /* ══════════════════════════════════════════════════════════════════
+       RESET
+    ══════════════════════════════════════════════════════════════════ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* Selection highlight */
+    ::selection { background: rgba(183,65,14,.35); }
+
+    /* Custom scrollbar — 4px, --b2 thumb, no track */
+    ::-webkit-scrollbar              { width: 4px; height: 4px; }
+    ::-webkit-scrollbar-track        { background: transparent; }
+    ::-webkit-scrollbar-thumb        { background: var(--b2); border-radius: 2px; }
+
+    /* ══════════════════════════════════════════════════════════════════
+       BASE
+    ══════════════════════════════════════════════════════════════════ */
+    html, body {
+      height: 100%;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      line-height: 1.5;
+      background: var(--bg);
+      color: var(--white);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* 0.2s colour transition for theme toggling (Phase 4) */
+    body, #top-bar, #main-area, #tab-bar {
+      transition: background-color 0.2s, border-color 0.2s, color 0.2s;
+    }
+
+    /* ══════════════════════════════════════════════════════════════════
+       LAYOUT SKELETON
+       top-bar  52px fixed top
+       main-area  fills between top-bar and tab-bar, scrollable
+       tab-bar  64px fixed bottom, horizontal scroll
+    ══════════════════════════════════════════════════════════════════ */
+
+    #top-bar {
+      position: fixed;
+      inset: 0 0 auto 0;
+      height: 52px;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 0 20px;
+      background: var(--sb);
+      border-bottom: 1px solid var(--b1);
+    }
+
+    #main-area {
+      position: fixed;
+      inset: 52px 0 64px 0;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding: 32px 24px;
+      background: var(--bg);
+    }
+
+    #tab-bar {
+      position: fixed;
+      inset: auto 0 0 0;
+      height: 64px;
+      z-index: 100;
+      display: flex;
+      align-items: flex-end;    /* tabs sit flush with bar bottom */
+      gap: 2px;
+      padding: 0 8px;
+      overflow-x: auto;
+      overflow-y: hidden;
+      background: var(--sb);
+      border-top: 1px solid var(--b1);
+    }
+
+    /* ══════════════════════════════════════════════════════════════════
+       BRAND MARK  ·  urlmgr
+    ══════════════════════════════════════════════════════════════════ */
+    #brand {
+      flex-shrink: 0;
+      font-family: 'Syne', sans-serif;
+      font-size: 15px;
+      letter-spacing: -0.04em;
+    }
+    #brand .b-url { color: var(--rust2); font-weight: 800; }
+    #brand .b-mgr { color: var(--dim);   font-weight: 600; }
+
+    /* Spacer pushes Phase-4 action buttons to the right */
+    #top-spacer { flex: 1; }
+
+    /* ══════════════════════════════════════════════════════════════════
+       EMPTY STATE  ·  shown when active sheet has no folders
+    ══════════════════════════════════════════════════════════════════ */
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      gap: 14px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13.5px;
+      color: var(--muted);
+      text-align: center;
+      user-select: none;
+    }
+    .empty-state svg    { opacity: 0.18; }
+    .empty-state strong { color: var(--dim); font-weight: 500; }
+
+    /* ══════════════════════════════════════════════════════════════════
+       SHEET TABS
+    ══════════════════════════════════════════════════════════════════ */
+    .sheet-tab {
+      position: relative;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: flex-start;
+      min-width: 96px;
+      max-width: 172px;
+      height: 52px;
+      padding: 0 24px 0 11px;   /* 24px right: space for ✕ button */
+      border-radius: 6px 6px 0 0;
+      border-top: 2px solid transparent;
+      cursor: pointer;
+      user-select: none;
+      background: transparent;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .sheet-tab:hover:not(.active) { background: var(--b1); }
+
+    /* Active tab: rust top border + bg matching main area (visual "lift") */
+    .sheet-tab.active {
+      border-top-color: var(--rust);
+      background: var(--bg);
+    }
+    .sheet-tab.active:hover { background: var(--bg); }
+
+    /* Tab name — Syne 600 */
+    .tab-name {
+      font-family: 'Syne', sans-serif;
+      font-weight: 600;
+      font-size: 12.5px;
+      color: var(--dim);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 144px;
+      line-height: 1.3;
+      transition: color 0.15s;
+    }
+    .sheet-tab.active .tab-name { color: var(--white); }
+
+    /* Last edit date — DM Mono small */
+    .tab-date {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      font-weight: 400;
+      color: var(--muted);
+      margin-top: 3px;
+      line-height: 1;
+    }
+
+    /* Delete ✕ — appears only on tab hover */
+    .tab-del {
+      position: absolute;
+      top: 7px;
+      right: 5px;
+      width: 16px;
+      height: 16px;
+      border-radius: 3px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 9px;
+      font-weight: 700;
+      color: var(--muted);
+      opacity: 0;
+      pointer-events: none;
+      cursor: pointer;
+      transition: opacity 0.15s, background 0.15s, color 0.15s;
+    }
+    .sheet-tab:hover .tab-del  { opacity: 1; pointer-events: auto; }
+    .tab-del:hover             { background: var(--rust); color: #fff; }
+
+    /* ── Inline rename input ─────────────────────────────────────── */
+    .tab-rename-input {
+      font-family: 'Syne', sans-serif;
+      font-weight: 600;
+      font-size: 12.5px;
+      color: var(--white);
+      background: transparent;
+      border: none;
+      border-bottom: 1.5px solid var(--rust);
+      outline: none;
+      width: 88px;
+      padding: 0;
+      line-height: 1.3;
+    }
+
+    /* ── Drag-to-reorder visual states ───────────────────────────── */
+    .sheet-tab.dragging  { opacity: 0.3; }
+    .sheet-tab.drag-over { box-shadow: inset 2px 0 0 var(--rust2); }
+
+    /* ── + New sheet button ──────────────────────────────────────── */
+    #tab-add {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      margin-left: 4px;
+      margin-bottom: 12px;   /* visually centres in 64px bar beside 52px tabs */
+      cursor: pointer;
+      color: var(--muted);
+      font-size: 20px;
+      font-weight: 300;
+      line-height: 1;
+      transition: background 0.15s, color 0.15s;
+    }
+    #tab-add:hover { background: var(--b1); color: var(--white); }
+
+    /* ── Inline create-sheet input ───────────────────────────────── */
+    .tab-create-input {
+      flex-shrink: 0;
+      align-self: flex-end;   /* bottom-aligns with tabs */
+      height: 52px;
+      min-width: 112px;
+      padding: 0 10px;
+      font-family: 'Syne', sans-serif;
+      font-weight: 600;
+      font-size: 12.5px;
+      color: var(--white);
+      background: var(--card);
+      border: 1.5px solid var(--rust);
+      border-radius: 6px 6px 0 0;
+      outline: none;
+    }
+    .tab-create-input::placeholder { color: var(--muted); }
+
+    /* ══════════════════════════════════════════════════════════════════
+       CONFIRMATION DIALOG
+    ══════════════════════════════════════════════════════════════════ */
+    .dlg-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(2,1,1,.70);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+    }
+    .dlg-box {
+      width: 90%;
+      max-width: 360px;
+      padding: 24px;
+      background: var(--card2);
+      border: 1px solid var(--b2);
+      border-radius: 10px;
+    }
+    .dlg-title {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 15px;
+      color: var(--white);
+      margin-bottom: 8px;
+    }
+    .dlg-msg {
+      font-size: 13px;
+      color: var(--dim);
+      line-height: 1.55;
+      margin-bottom: 22px;
+    }
+    .dlg-actions { display: flex; justify-content: flex-end; gap: 8px; }
+
+    .btn {
+      padding: 7px 15px;
+      border-radius: 6px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      font-weight: 500;
+      border: none;
+      cursor: pointer;
+      outline: none;
+      transition: background 0.15s;
+    }
+    .btn-ghost        { background: var(--b2);   color: var(--dim);   }
+    .btn-ghost:hover  { background: var(--b1);   color: var(--white); }
+    .btn-danger       { background: var(--rust);  color: #fff;         }
+    .btn-danger:hover { background: var(--rust2);                      }
+  </style>
+</head>
+
+<body>
+
+  <!-- ══ TOP BAR ════════════════════════════════════════════════════ -->
+  <header id="top-bar">
+    <div id="brand">
+      <span class="b-url">url</span><span class="b-mgr">mgr</span>
+    </div>
+    <!-- Phase 3: search input slot -->
+    <div id="top-spacer"></div>
+    <!-- Phase 4: import / export / theme toggle slots -->
+  </header>
+
+  <!-- ══ MAIN AREA ══════════════════════════════════════════════════ -->
+  <main id="main-area"></main>
+
+  <!-- ══ SHEET TAB BAR ══════════════════════════════════════════════ -->
+  <nav id="tab-bar"></nav>
+
+
+  <script>
+    /* ════════════════════════════════════════════════════════════════════
+       URL MANAGER — Phase 1: Shell + Sheets
+       localStorage key : urlmanager_v1
+       Data model       : see PRD § Data Model
+    ════════════════════════════════════════════════════════════════════ */
+
+    // ── Constants ─────────────────────────────────────────────────────
+    const LS_KEY = 'urlmanager_v1';
+
+    // ── App state (mutated in-place; persisted on every write) ─────────
+    let state  = null;
+    let dragId = null;   // ID of the sheet-tab currently being dragged
+
+
+    /* ──────────────────────────────────────────────────────────────────
+       UTILITIES
+    ────────────────────────────────────────────────────────────────── */
+
+    /**
+     * Generate a PRD-spec ID: prefix + '_' + 8 random [a-z0-9] chars
+     * e.g.  uid('sheet')  →  'sheet_a3f7x2kp'
+     */
+    function uid(prefix) {
+      const ch = 'abcdefghijklmnopqrstuvwxyz0123456789';
+      let s = prefix + '_';
+      for (let i = 0; i < 8; i++) s += ch[Math.floor(Math.random() * ch.length)];
+      return s;
+    }
+
+    /** Return today as ISO date string: "2026-10-08" */
+    function isoToday() {
+      const d  = new Date();
+      const yy = d.getFullYear();
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const dd = String(d.getDate()).padStart(2, '0');
+      return `${yy}-${mm}-${dd}`;
+    }
+
+    /**
+     * Format ISO date for display per PRD spec:
+     * "2026-10-07"  →  "07 Oct 2026"
+     */
+    function fmtDate(iso) {
+      if (!iso) return '—';
+      const [y, m, d] = iso.split('-');
+      const MON = ['Jan','Feb','Mar','Apr','May','Jun',
+                   'Jul','Aug','Sep','Oct','Nov','Dec'];
+      return `${d} ${MON[+m - 1] ?? ''} ${y}`;
+    }
+
+    /** Escape HTML special chars for safe innerHTML insertion */
+    function esc(s) {
+      return String(s ?? '').replace(/[&<>"']/g, c =>
+        ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":"&#39;" }[c])
+      );
+    }
+
+
+    /* ──────────────────────────────────────────────────────────────────
+       PERSISTENCE  ·  localStorage key: urlmanager_v1
+    ────────────────────────────────────────────────────────────────── */
+
+    function persist() {
+      try { localStorage.setItem(LS_KEY, JSON.stringify(state)); }
+      catch (e) { console.warn('[urlmgr] persist failed', e); }
+    }
+
+    function hydrate() {
+      try {
+        const raw = localStorage.getItem(LS_KEY);
+        if (!raw) return null;
+        const p = JSON.parse(raw);
+        // Basic shape check before accepting saved data
+        return (p?.version && Array.isArray(p?.sheets)) ? p : null;
+      } catch (e) {
+        console.warn('[urlmgr] hydrate failed', e);
+        return null;
+      }
+    }
+
+    /** Build the initial default state (first-ever load) */
+    function newState() {
+      const id = uid('sheet');
+      return {
+        version:  '1.0',
+        settings: { theme: 'dark', activeSheetId: id },
+        sheets: [{
+          id,
+          name:         'My Links',
+          lastEditDate: isoToday(),
+          order:        0,
+          folders:      []
+        }]
+      };
+    }
+
+
+    /* ──────────────────────────────────────────────────────────────────
+       SHEET HELPERS
+    ────────────────────────────────────────────────────────────────── */
+
+    /** Return sheets sorted by .order ascending */
+    const ordered = () => [...state.sheets].sort((a, b) => a.order - b.order);
+
+    /** Return the currently active sheet object, or the first sheet */
+    const activeSheet = () =>
+      state.sheets.find(s => s.id === state.settings.activeSheetId) ??
+      state.sheets[0] ??
+      null;
+
+    /** Update a sheet's lastEditDate to today (called on any content change) */
+    function touch(id) {
+      const s = state.sheets.find(s => s.id === id);
+      if (s) s.lastEditDate = isoToday();
+    }
+
+
+    /* ──────────────────────────────────────────────────────────────────
+       SHEET CRUD
+    ────────────────────────────────────────────────────────────────── */
+
+    function activateSheet(id) {
+      state.settings.activeSheetId = id;
+      persist();
+      renderAll();
+    }
+
+    function addSheet(name) {
+      name = name.trim();
+      if (!name) return;
+      const maxOrd = state.sheets.reduce((m, s) => Math.max(m, s.order), -1);
+      const sheet  = {
+        id:           uid('sheet'),
+        name,
+        lastEditDate: isoToday(),
+        order:        maxOrd + 1,
+        folders:      []
+      };
+      state.sheets.push(sheet);
+      state.settings.activeSheetId = sheet.id;
+      persist();
+      renderAll();
+    }
+
+    function renameSheet(id, name) {
+      name = name.trim();
+      if (!name) return;
+      const s = state.sheets.find(s => s.id === id);
+      if (!s) return;
+      s.name = name;
+      touch(id);          // a rename counts as an edit
+      persist();
+      renderAll();
+    }
+
+    function deleteSheet(id) {
+      const idx = state.sheets.findIndex(s => s.id === id);
+      if (idx < 0) return;
+
+      const sh  = state.sheets[idx];
+      const msg = sh.folders.length
+        ? `"${esc(sh.name)}" contains folders and links. Delete everything?`
+        : `Delete the sheet "${esc(sh.name)}"?`;
+
+      showConfirm('Delete Sheet', msg, () => {
+        state.sheets.splice(idx, 1);
+
+        // Always keep at least one sheet
+        if (!state.sheets.length) {
+          const nid = uid('sheet');
+          state.sheets.push({
+            id: nid, name: 'My Links',
+            lastEditDate: isoToday(), order: 0, folders: []
+          });
+          state.settings.activeSheetId = nid;
+        } else if (state.settings.activeSheetId === id) {
+          state.settings.activeSheetId = ordered()[0].id;
+        }
+
+        persist();
+        renderAll();
+      });
+    }
+
+
+    /* ──────────────────────────────────────────────────────────────────
+       CONFIRMATION DIALOG
+    ────────────────────────────────────────────────────────────────── */
+
+    function showConfirm(title, msg, onOk) {
+      const el = document.createElement('div');
+      el.className = 'dlg-overlay';
+      el.tabIndex  = -1;
+      el.innerHTML = `
+        <div class="dlg-box" role="dialog" aria-modal="true">
+          <div class="dlg-title">${title}</div>
+          <div class="dlg-msg">${msg}</div>
+          <div class="dlg-actions">
+            <button class="btn btn-ghost"  data-r="cancel">Cancel</button>
+            <button class="btn btn-danger" data-r="ok">Delete</button>
+          </div>
+        </div>`;
+      document.body.appendChild(el);
+      el.focus();
+
+      const close = () => el.remove();
+      el.querySelector('[data-r="cancel"]').onclick = close;
+      el.querySelector('[data-r="ok"]').onclick     = () => { close(); onOk(); };
+      el.addEventListener('click',   e => { if (e.target === el) close(); });
+      el.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
+    }
+
+
+    /* ──────────────────────────────────────────────────────────────────
+       DRAG-TO-REORDER TABS  ·  HTML5 native drag-and-drop
+    ────────────────────────────────────────────────────────────────── */
+
+    function onDragStart(e) {
+      dragId = e.currentTarget.dataset.id;
+      e.currentTarget.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', dragId);
+    }
+
+    function onDragOver(e) {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      // Clear previous indicator, set on current target only
+      document.querySelectorAll('.sheet-tab.drag-over')
+               .forEach(t => t.classList.remove('drag-over'));
+      if (e.currentTarget.dataset.id !== dragId)
+        e.currentTarget.classList.add('drag-over');
+    }
+
+    function onDrop(e) {
+      e.preventDefault();
+      const src = e.dataTransfer.getData('text/plain');
+      const tgt = e.currentTarget.dataset.id;
+      if (!src || src === tgt) return;
+
+      const sorted = ordered();
+      const si = sorted.findIndex(s => s.id === src);
+      const ti = sorted.findIndex(s => s.id === tgt);
+      if (si < 0 || ti < 0) return;
+
+      // Splice source out, insert before target
+      const [moved] = sorted.splice(si, 1);
+      sorted.splice(ti, 0, moved);
+      // Re-assign .order to 0, 1, 2 …
+      sorted.forEach((s, i) => { s.order = i; });
+
+      persist();
+      renderTabs();
+    }
+
+    function onDragEnd() {
+      document.querySelectorAll('.sheet-tab')
+               .forEach(t => t.classList.remove('dragging', 'drag-over'));
+      dragId = null;
+    }
+
+
+    /* ──────────────────────────────────────────────────────────────────
+       RENDER — MAIN AREA
+    ────────────────────────────────────────────────────────────────── */
+
+    function renderMain() {
+      const area  = document.getElementById('main-area');
+      const sheet = activeSheet();
+
+      if (!sheet) {
+        area.innerHTML = `
+          <div class="empty-state">
+            <span>No sheets found.</span>
+          </div>`;
+        return;
+      }
+
+      if (!sheet.folders.length) {
+        // PRD exact copy: "No folders yet — click + Add Folder to get started"
+        area.innerHTML = `
+          <div class="empty-state">
+            <svg width="54" height="54" viewBox="0 0 54 54" fill="none"
+                 xmlns="http://www.w3.org/2000/svg" color="var(--muted)" aria-hidden="true">
+              <!-- folder outline -->
+              <path d="M7 44V20a2 2 0 0 1 2-2h13l4.5 4.5H47a2 2 0 0 1 2 2v19.5a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2Z"
+                    stroke="currentColor" stroke-width="1.6" fill="none" stroke-linejoin="round"/>
+              <!-- plus icon -->
+              <path d="M27 30.5v9M22.5 35h9"
+                    stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>
+            <span>No folders yet — click <strong>+ Add Folder</strong> to get started</span>
+          </div>`;
+        return;
+      }
+
+      // ── Phase 2 will render folder + link list here ──
+      area.innerHTML = '';
+    }
+
+
+    /* ──────────────────────────────────────────────────────────────────
+       RENDER — TAB BAR
+    ────────────────────────────────────────────────────────────────── */
+
+    function renderTabs() {
+      const bar = document.getElementById('tab-bar');
+      bar.innerHTML = '';
+
+      ordered().forEach(sheet => {
+        const tab = document.createElement('div');
+        tab.className  = 'sheet-tab' + (sheet.id === state.settings.activeSheetId ? ' active' : '');
+        tab.dataset.id = sheet.id;
+        tab.draggable  = true;
+
+        // Name
+        const nm = document.createElement('span');
+        nm.className   = 'tab-name';
+        nm.textContent = sheet.name;
+
+        // Last edit date
+        const dt = document.createElement('span');
+        dt.className   = 'tab-date';
+        dt.textContent = fmtDate(sheet.lastEditDate);
+
+        // Delete ✕
+        const del = document.createElement('span');
+        del.className   = 'tab-del';
+        del.title       = 'Delete sheet';
+        del.textContent = '✕';
+
+        tab.append(nm, dt, del);
+
+        // Click → activate
+        tab.addEventListener('click', e => {
+          if (e.target === del) return;
+          if (tab.querySelector('.tab-rename-input')) return;
+          activateSheet(sheet.id);
+        });
+
+        // Double-click → rename inline
+        tab.addEventListener('dblclick', e => {
+          if (e.target === del) return;
+          startRename(tab, sheet, nm);
+        });
+
+        // ✕ → delete with confirmation
+        del.addEventListener('click', e => {
+          e.stopPropagation();
+          deleteSheet(sheet.id);
+        });
+
+        // Drag-to-reorder
+        tab.addEventListener('dragstart', onDragStart);
+        tab.addEventListener('dragover',  onDragOver);
+        tab.addEventListener('drop',      onDrop);
+        tab.addEventListener('dragend',   onDragEnd);
+
+        bar.appendChild(tab);
+      });
+
+      // ── + New sheet button ──────────────────────────────────────
+      const plus = document.createElement('div');
+      plus.id          = 'tab-add';
+      plus.title       = 'New sheet';
+      plus.textContent = '+';
+      plus.addEventListener('click', startCreate);
+      bar.appendChild(plus);
+    }
+
+
+    /* ──────────────────────────────────────────────────────────────────
+       INLINE RENAME  ·  double-click on tab name
+    ────────────────────────────────────────────────────────────────── */
+
+    function startRename(tab, sheet, nm) {
+      if (tab.querySelector('.tab-rename-input')) return;  // already renaming
+
+      const inp = document.createElement('input');
+      inp.type      = 'text';
+      inp.className = 'tab-rename-input';
+      inp.value     = sheet.name;
+      nm.replaceWith(inp);
+      inp.focus();
+      inp.select();
+
+      let done = false;
+      const commit = () => {
+        if (done) return; done = true;
+        renameSheet(sheet.id, inp.value.trim() || sheet.name);
+      };
+      const cancel = () => {
+        if (done) return; done = true;
+        renderTabs();
+      };
+
+      inp.addEventListener('blur', commit);
+      inp.addEventListener('keydown', e => {
+        if (e.key === 'Enter')  { e.preventDefault(); commit(); }
+        if (e.key === 'Escape') { e.preventDefault(); cancel(); }
+      });
+    }
+
+
+    /* ──────────────────────────────────────────────────────────────────
+       INLINE CREATE  ·  click + button
+    ────────────────────────────────────────────────────────────────── */
+
+    function startCreate() {
+      const bar  = document.getElementById('tab-bar');
+      const plus = document.getElementById('tab-add');
+      if (bar.querySelector('.tab-create-input')) return;  // already open
+
+      const inp = document.createElement('input');
+      inp.type        = 'text';
+      inp.className   = 'tab-create-input';
+      inp.placeholder = 'Sheet name…';
+      inp.maxLength   = 48;
+      bar.insertBefore(inp, plus);
+      inp.focus();
+
+      let done = false;
+      const commit = () => {
+        if (done) return; done = true;
+        const v = inp.value.trim();
+        if (v) addSheet(v);
+        else   { inp.remove(); renderTabs(); }
+      };
+      const cancel = () => {
+        if (done) return; done = true;
+        inp.remove();
+        renderTabs();
+      };
+
+      inp.addEventListener('blur', commit);
+      inp.addEventListener('keydown', e => {
+        if (e.key === 'Enter')  { e.preventDefault(); commit(); }
+        if (e.key === 'Escape') { e.preventDefault(); cancel(); }
+      });
+    }
+
+
+    /* ──────────────────────────────────────────────────────────────────
+       RENDER ALL
+    ────────────────────────────────────────────────────────────────── */
+
+    function renderAll() {
+      renderTabs();
+      renderMain();
+    }
+
+
+    /* ──────────────────────────────────────────────────────────────────
+       INIT
+    ────────────────────────────────────────────────────────────────── */
+
+    (function init() {
+      // Load saved data or bootstrap with defaults
+      state = hydrate() ?? newState();
+
+      // Guard: make sure activeSheetId points to a real sheet
+      if (!state.sheets.find(s => s.id === state.settings.activeSheetId)) {
+        const first = ordered()[0];
+        if (first) state.settings.activeSheetId = first.id;
+      }
+
+      // Apply saved theme (Phase 4 adds the toggle; respect the saved value now)
+      if (state.settings?.theme === 'light') document.body.classList.add('light');
+
+      renderAll();
+    })();
+  </script>
+</body>
+</html>
