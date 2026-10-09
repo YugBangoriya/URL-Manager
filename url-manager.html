@@ -328,6 +328,14 @@
     }
     .dlg-actions { display: flex; justify-content: flex-end; gap: 8px; }
 
+    /* Dialog entrance — brief scale-in creates a timing gap that prevents
+       an accidental second click from landing on the confirm button        */
+    @keyframes dlg-in {
+      from { opacity: 0; transform: scale(0.94) translateY(8px); }
+      to   { opacity: 1; transform: scale(1)    translateY(0);   }
+    }
+    .dlg-box { animation: dlg-in 0.15s ease; }
+
     .btn {
       padding: 7px 15px;
       border-radius: 6px;
@@ -343,6 +351,302 @@
     .btn-ghost:hover  { background: var(--b1);   color: var(--white); }
     .btn-danger       { background: var(--rust);  color: #fff;         }
     .btn-danger:hover { background: var(--rust2);                      }
+
+    /* ══════════════════════════════════════════════════════════════════
+       PHASE 2 — FOLDERS + LINKS
+    ══════════════════════════════════════════════════════════════════ */
+
+    /* Extra bottom padding so content clears the pinned Add Folder bar */
+    #main-area { padding-bottom: 80px; }
+
+    /* ── Add Folder Bar (pinned just above tab bar) ───────────────── */
+    #folder-add-bar {
+      position: fixed;
+      bottom: 64px;
+      left: 0; right: 0;
+      padding: 18px 24px 10px;
+      background: linear-gradient(to top, var(--bg) 55%, transparent);
+      z-index: 90;
+      pointer-events: none;       /* gradient doesn't block scroll */
+    }
+    #btn-add-folder {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 7px 14px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--dim);
+      background: var(--card);
+      border: 1px solid var(--b2);
+      border-radius: 6px;
+      cursor: pointer;
+      pointer-events: all;
+      transition: color 0.15s, border-color 0.15s, background 0.15s;
+    }
+    #btn-add-folder:hover {
+      color: var(--white);
+      border-color: var(--rust);
+      background: var(--card2);
+    }
+
+    /* ── Folder list wrapper ──────────────────────────────────────── */
+    #folder-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    /* ── Folder card ──────────────────────────────────────────────── */
+    .folder-card {
+      background: var(--card);
+      border: 1px solid var(--b1);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .folder-card.folder-drag-over { box-shadow: 0 -3px 0 var(--rust); }
+
+    /* ── Folder header row ────────────────────────────────────────── */
+    .folder-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 10px 9px 12px;
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.15s;
+    }
+    .folder-header:hover { background: var(--b1); }
+
+    /* Chevron rotates when collapsed */
+    .folder-chevron {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      color: var(--muted);
+      transition: transform 0.2s ease;
+    }
+    .folder-card.collapsed .folder-chevron { transform: rotate(-90deg); }
+
+    /* Folder name */
+    .folder-name {
+      flex: 1;
+      min-width: 0;
+      font-family: 'Syne', sans-serif;
+      font-weight: 600;
+      font-size: 13px;
+      color: var(--white);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Inline rename input */
+    .folder-rename-inp {
+      flex: 1;
+      min-width: 0;
+      font-family: 'Syne', sans-serif;
+      font-weight: 600;
+      font-size: 13px;
+      color: var(--white);
+      background: transparent;
+      border: none;
+      border-bottom: 1.5px solid var(--rust);
+      outline: none;
+      padding: 0;
+    }
+
+    /* Link-count badge */
+    .folder-badge {
+      flex-shrink: 0;
+      font-family: 'DM Mono', monospace;
+      font-size: 10.5px;
+      color: var(--muted);
+      background: var(--b1);
+      border-radius: 10px;
+      padding: 1px 8px;
+      line-height: 1.6;
+    }
+
+    /* Drag-handle (dots grid) */
+    .folder-drag-hdl {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 22px;
+      height: 22px;
+      color: var(--muted);
+      cursor: grab;
+      opacity: 0;
+      transition: opacity 0.15s;
+    }
+    .folder-header:hover .folder-drag-hdl { opacity: 1; }
+    .folder-drag-hdl:active { cursor: grabbing; }
+
+    /* Delete icon button */
+    .folder-del {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px; height: 24px;
+      border: none;
+      background: none;
+      color: var(--muted);
+      cursor: pointer;
+      border-radius: 4px;
+      opacity: 0;
+      transition: opacity 0.15s, color 0.15s, background 0.15s;
+    }
+    .folder-header:hover .folder-del { opacity: 1; }
+    .folder-del:hover { color: var(--rust2); background: var(--b2); }
+
+    /* ── Folder body / collapse animation ────────────────────────── */
+    .folder-body {
+      overflow: hidden;
+      max-height: 4000px;
+      transition: max-height 0.25s ease;
+    }
+    .folder-card.collapsed .folder-body { max-height: 0; }
+
+    /* ── Link column header ───────────────────────────────────────── */
+    .link-col-hdr {
+      display: grid;
+      grid-template-columns: 22px 25fr 35fr 35fr 52px;
+      padding: 4px 10px 4px 8px;
+      border-top: 1px solid var(--b1);
+      border-bottom: 1px solid var(--b1);
+      background: var(--card2);
+    }
+    .link-col-hdr span {
+      padding: 0 4px;
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      font-weight: 500;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+    }
+
+    /* ── Link row ─────────────────────────────────────────────────── */
+    .link-row {
+      display: grid;
+      grid-template-columns: 22px 25fr 35fr 35fr 52px;
+      align-items: center;
+      min-height: 38px;
+      padding: 0 10px 0 8px;
+      border-bottom: 1px solid var(--faint);
+      transition: background 0.15s;
+    }
+    .link-rows-wrap .link-row:last-child { border-bottom: none; }
+    .link-row:hover { background: var(--card2); }
+    .link-row.link-drag-over { box-shadow: 0 -2px 0 var(--rust); }
+
+    /* ── Link drag handle ─────────────────────────────────────────── */
+    .link-drag-hdl {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      color: var(--muted);
+      cursor: grab;
+      opacity: 0;
+      transition: opacity 0.15s;
+    }
+    .link-row:hover .link-drag-hdl { opacity: 1; }
+    .link-drag-hdl:active { cursor: grabbing; }
+
+    /* ── Link cell (display) ──────────────────────────────────────── */
+    .link-cell {
+      padding: 6px 8px 6px 4px;
+      min-width: 0;
+      overflow: hidden;
+      cursor: text;
+    }
+    .lc-inner {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      color: var(--dim);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .lc-inner.ph { color: var(--muted); font-style: italic; }
+    .lc-inner a  { color: var(--blue); text-decoration: none; }
+    .lc-inner a:hover { text-decoration: underline; }
+
+    /* ── Link cell (edit) ─────────────────────────────────────────── */
+    .link-cell-inp {
+      width: 100%;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      color: var(--white);
+      background: transparent;
+      border: none;
+      border-bottom: 1.5px solid var(--rust);
+      outline: none;
+      padding: 0;
+    }
+
+    /* ── Link action buttons ──────────────────────────────────────── */
+    .link-actions {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 2px;
+    }
+    .lac {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px; height: 24px;
+      border: none;
+      background: none;
+      color: var(--muted);
+      cursor: pointer;
+      border-radius: 4px;
+      opacity: 0;
+      transition: opacity 0.15s, color 0.15s, background 0.15s;
+    }
+    .link-row:hover .lac { opacity: 1; }
+    .lac:hover           { color: var(--white); background: var(--b2); }
+    .lac.copy-done       { color: var(--green); opacity: 1 !important; }
+    .lac.lac-disabled    { opacity: 0.18 !important; cursor: not-allowed; pointer-events: none; }
+    .lac.lac-del:hover   { color: var(--rust2); }
+
+    /* ── Empty folder state ───────────────────────────────────────── */
+    .folder-empty {
+      padding: 14px 12px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      color: var(--muted);
+      text-align: center;
+      border-top: 1px solid var(--b1);
+    }
+
+    /* ── Add Link button row ──────────────────────────────────────── */
+    .add-link-bar {
+      padding: 6px 12px 8px;
+      border-top: 1px solid var(--faint);
+    }
+    .btn-add-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 2px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--muted);
+      background: none;
+      border: none;
+      cursor: pointer;
+      border-radius: 4px;
+      transition: color 0.15s;
+    }
+    .btn-add-link:hover { color: var(--rust2); }
   </style>
 </head>
 
@@ -360,6 +664,20 @@
 
   <!-- ══ MAIN AREA ══════════════════════════════════════════════════ -->
   <main id="main-area"></main>
+
+  <!-- ══ ADD FOLDER BAR (pinned above tab bar) ══════════════════════ -->
+  <div id="folder-add-bar">
+    <button id="btn-add-folder">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none"
+           stroke="currentColor" stroke-width="1.8"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M1 4.5A1.5 1.5 0 0 1 2.5 3H6l2 2h5.5A1.5 1.5 0 0 1 15 6.5V12A1.5 1.5 0 0 1 13.5 13.5h-11A1.5 1.5 0 0 1 1 12Z"/>
+        <line x1="8" y1="7.5" x2="8" y2="11.5"/>
+        <line x1="6" y1="9.5" x2="10" y2="9.5"/>
+      </svg>
+      + Add Folder
+    </button>
+  </div>
 
   <!-- ══ SHEET TAB BAR ══════════════════════════════════════════════ -->
   <nav id="tab-bar"></nav>
@@ -564,8 +882,8 @@
           <div class="dlg-title">${title}</div>
           <div class="dlg-msg">${msg}</div>
           <div class="dlg-actions">
-            <button class="btn btn-ghost"  data-r="cancel">Cancel</button>
             <button class="btn btn-danger" data-r="ok">Delete</button>
+            <button class="btn btn-ghost"  data-r="cancel">Cancel</button>
           </div>
         </div>`;
       document.body.appendChild(el);
@@ -628,6 +946,480 @@
     }
 
 
+    /* ══════════════════════════════════════════════════════════════════
+       PHASE 2 — SVG ICON STRINGS
+    ══════════════════════════════════════════════════════════════════ */
+
+    const SVG_CHEVRON = `<svg width="12" height="12" viewBox="0 0 12 12" fill="none"
+      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="2 4 6 8 10 4"/></svg>`;
+
+    const SVG_DOTS = `<svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
+      <circle cx="3.5" cy="2.5" r="1.1"/><circle cx="3.5" cy="6" r="1.1"/>
+      <circle cx="3.5" cy="9.5" r="1.1"/><circle cx="8.5" cy="2.5" r="1.1"/>
+      <circle cx="8.5" cy="6" r="1.1"/><circle cx="8.5" cy="9.5" r="1.1"/></svg>`;
+
+    const SVG_TRASH = `<svg width="13" height="13" viewBox="0 0 16 16" fill="none"
+      stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="3 5 13 5"/>
+      <path d="M6 5V3h4v2"/>
+      <path d="M5 5l.9 8.5h4.2L11 5"/></svg>`;
+
+    const SVG_COPY = `<svg width="13" height="13" viewBox="0 0 16 16" fill="none"
+      stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="5" y="5" width="8" height="9" rx="1.5"/>
+      <path d="M10 5V3.5A1.5 1.5 0 0 0 8.5 2H4A1.5 1.5 0 0 0 2.5 3.5V10A1.5 1.5 0 0 0 4 11.5H5"/></svg>`;
+
+    const SVG_CHECK = `<svg width="13" height="13" viewBox="0 0 16 16" fill="none"
+      stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="2 8 6 12 14 4"/></svg>`;
+
+    const SVG_PLUS = `<svg width="12" height="12" viewBox="0 0 12 12" fill="none"
+      stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+      <line x1="6" y1="1" x2="6" y2="11"/>
+      <line x1="1" y1="6" x2="11" y2="6"/></svg>`;
+
+
+    /* ══════════════════════════════════════════════════════════════════
+       PHASE 2 — FOLDER CRUD
+    ══════════════════════════════════════════════════════════════════ */
+
+    function addFolder() {
+      const sh = activeSheet();
+      if (!sh) return;
+      const maxOrd = sh.folders.reduce((m, f) => Math.max(m, f.order), -1);
+      const fo = {
+        id:        uid('folder'),
+        name:      'New Folder',
+        collapsed: false,
+        order:     maxOrd + 1,
+        links:     []
+      };
+      sh.folders.push(fo);
+      touch(sh.id);
+      persist();
+      renderMain();
+      renderTabs();
+      // Auto-open inline rename on the just-created folder
+      setTimeout(() => {
+        const card = document.querySelector(`.folder-card[data-fid="${fo.id}"]`);
+        if (!card) return;
+        const nm = card.querySelector('.folder-name');
+        if (nm) startFolderRename(card, sh.id, fo.id, nm);
+      }, 20);
+    }
+
+    function renameFolder(sheetId, folderId, name) {
+      name = name.trim();
+      if (!name) return;
+      const sh = state.sheets.find(s => s.id === sheetId);
+      const fo = sh && sh.folders.find(f => f.id === folderId);
+      if (!fo) return;
+      fo.name = name;
+      touch(sheetId);
+      persist();
+      renderTabs();
+    }
+
+    function deleteFolder(sheetId, folderId) {
+      const sh = state.sheets.find(s => s.id === sheetId);
+      const fo = sh && sh.folders.find(f => f.id === folderId);
+      if (!sh || !fo) return;
+      const hasLinks = fo.links.length > 0;
+      const msg = hasLinks
+        ? `"${esc(fo.name)}" contains ${fo.links.length} link${fo.links.length !== 1 ? 's' : ''}. Delete everything?`
+        : `Delete the folder "${esc(fo.name)}"?`;
+      showConfirm('Delete Folder', msg, () => {
+        sh.folders = sh.folders.filter(f => f.id !== folderId);
+        touch(sheetId);
+        persist();
+        renderMain();
+        renderTabs();
+      });
+    }
+
+    function toggleFolder(sheetId, folderId) {
+      const sh = state.sheets.find(s => s.id === sheetId);
+      const fo = sh && sh.folders.find(f => f.id === folderId);
+      if (!fo) return;
+      fo.collapsed = !fo.collapsed;
+      persist();
+      // Toggle CSS class directly — no full re-render needed
+      const card = document.querySelector(`.folder-card[data-fid="${folderId}"]`);
+      if (card) card.classList.toggle('collapsed', fo.collapsed);
+    }
+
+    /* Inline rename for folder name — replaces span with input in place */
+    function startFolderRename(card, sheetId, folderId, nmEl) {
+      if (card.querySelector('.folder-rename-inp')) return;
+      const inp = document.createElement('input');
+      inp.type      = 'text';
+      inp.className = 'folder-rename-inp';
+      inp.value     = nmEl.textContent;
+      nmEl.replaceWith(inp);
+      inp.focus();
+      inp.select();
+      let done = false;
+      const commit = () => {
+        if (done) return; done = true;
+        const val = inp.value.trim() || nmEl.textContent;
+        renameFolder(sheetId, folderId, val);
+        inp.replaceWith(nmEl);
+        nmEl.textContent = val;
+      };
+      const cancel = () => {
+        if (done) return; done = true;
+        inp.replaceWith(nmEl);
+      };
+      inp.addEventListener('blur', commit);
+      inp.addEventListener('keydown', e => {
+        if (e.key === 'Enter')  { e.preventDefault(); commit(); }
+        if (e.key === 'Escape') { e.preventDefault(); cancel(); }
+      });
+    }
+
+
+    /* ══════════════════════════════════════════════════════════════════
+       PHASE 2 — LINK CRUD
+    ══════════════════════════════════════════════════════════════════ */
+
+    function addLink(sheetId, folderId) {
+      const sh = state.sheets.find(s => s.id === sheetId);
+      const fo = sh && sh.folders.find(f => f.id === folderId);
+      if (!fo) return;
+      const maxOrd = fo.links.reduce((m, l) => Math.max(m, l.order), -1);
+      const lk = { id: uid('link'), name: '', url: '', description: '', order: maxOrd + 1 };
+      fo.links.push(lk);
+      touch(sheetId);
+      persist();
+      renderMain();
+      renderTabs();
+      // Auto-focus the Name cell of the new row
+      setTimeout(() => {
+        const row = document.querySelector(`.link-row[data-lid="${lk.id}"]`);
+        const cell = row && row.querySelector('.link-cell[data-field="name"]');
+        if (cell) startCellEdit(cell, sheetId, folderId, lk.id, 'name');
+      }, 20);
+    }
+
+    function updateLink(sheetId, folderId, linkId, field, value) {
+      const sh = state.sheets.find(s => s.id === sheetId);
+      const fo = sh && sh.folders.find(f => f.id === folderId);
+      const lk = fo && fo.links.find(l => l.id === linkId);
+      if (!lk) return;
+      lk[field] = value;
+      touch(sheetId);
+      persist();
+      // Patch the single cell in the DOM instead of full re-render
+      const row  = document.querySelector(`.link-row[data-lid="${linkId}"]`);
+      const cell = row && row.querySelector(`.link-cell[data-field="${field}"]`);
+      if (cell) renderCellDisplay(cell, field, value);
+      // If URL changed, sync the copy button's disabled state
+      if (field === 'url') {
+        const copyBtn = row && row.querySelector('.lac-copy');
+        if (copyBtn) {
+          const hasUrl = !!value;
+          copyBtn.classList.toggle('lac-disabled', !hasUrl);
+          copyBtn.title = hasUrl ? 'Copy URL' : 'No URL to copy';
+        }
+      }
+      renderTabs();   // refresh last-edit date on tab
+    }
+
+    function deleteLink(sheetId, folderId, linkId) {
+      const sh = state.sheets.find(s => s.id === sheetId);
+      const fo = sh && sh.folders.find(f => f.id === folderId);
+      const lk = fo && fo.links.find(l => l.id === linkId);
+      if (!lk) return;
+      const label = lk.name ? `"${esc(lk.name)}"` : 'This link';
+      showConfirm('Delete Link', `${label} will be permanently removed.`, () => {
+        fo.links = fo.links.filter(l => l.id !== linkId);
+        touch(sheetId);
+        persist();
+        renderMain();
+        renderTabs();
+      });
+    }
+
+
+    /* ══════════════════════════════════════════════════════════════════
+       PHASE 2 — CELL DISPLAY + INLINE EDITING
+    ══════════════════════════════════════════════════════════════════ */
+
+    /* Render the display-mode content of a single link cell */
+    function renderCellDisplay(cell, field, value) {
+      cell.innerHTML = '';
+      const inner = document.createElement('div');
+      inner.className = 'lc-inner' + (value ? '' : ' ph');
+      if (field === 'url' && value) {
+        const a       = document.createElement('a');
+        a.href        = value;
+        a.target      = '_blank';
+        a.rel         = 'noopener noreferrer';
+        a.textContent = value;
+        // Clicking the link should not trigger cell edit
+        a.addEventListener('click', e => e.stopPropagation());
+        inner.appendChild(a);
+      } else {
+        inner.textContent = value || (field === 'name' ? 'Name…'
+                          : field === 'url'  ? 'https://…'
+                          :                    'Description…');
+      }
+      cell.appendChild(inner);
+    }
+
+    /* Replace cell content with an input for inline editing */
+    function startCellEdit(cell, sheetId, folderId, linkId, field) {
+      if (cell.querySelector('.link-cell-inp')) return;  // already editing
+      const sh = state.sheets.find(s => s.id === sheetId);
+      const fo = sh  && sh.folders.find(f => f.id === folderId);
+      const lk = fo  && fo.links.find(l => l.id === linkId);
+      if (!lk) return;
+
+      const original = lk[field] || '';
+      cell.innerHTML = '';
+      const inp = document.createElement('input');
+      inp.type      = 'text';
+      inp.className = 'link-cell-inp';
+      inp.value     = original;
+      cell.appendChild(inp);
+      inp.focus();
+      inp.select();
+
+      let done = false;
+      const commit = () => {
+        if (done) return; done = true;
+        updateLink(sheetId, folderId, linkId, field, inp.value.trim());
+      };
+      const cancel = () => {
+        if (done) return; done = true;
+        renderCellDisplay(cell, field, original);
+      };
+      inp.addEventListener('blur', commit);
+      inp.addEventListener('keydown', e => {
+        if (e.key === 'Enter')  { e.preventDefault(); inp.blur(); }
+        if (e.key === 'Escape') { e.preventDefault(); inp.removeEventListener('blur', commit); cancel(); }
+      });
+    }
+
+
+    /* ══════════════════════════════════════════════════════════════════
+       PHASE 2 — CLIPBOARD COPY
+    ══════════════════════════════════════════════════════════════════ */
+
+    function copyToClipboard(text, btn) {
+      const showDone = () => {
+        btn.classList.add('copy-done');
+        btn.innerHTML = SVG_CHECK;
+        setTimeout(() => {
+          btn.classList.remove('copy-done');
+          btn.innerHTML = SVG_COPY;
+        }, 1500);
+      };
+      // Fallback for non-HTTPS contexts (local file:// dev)
+      const fallback = () => {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.cssText = 'position:fixed;opacity:0;top:0;left:0';
+        document.body.appendChild(ta);
+        ta.select();
+        try { document.execCommand('copy'); } catch(e) {}
+        ta.remove();
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(showDone).catch(() => { fallback(); showDone(); });
+      } else {
+        fallback();
+        showDone();
+      }
+    }
+
+
+    /* ══════════════════════════════════════════════════════════════════
+       PHASE 2 — DRAG-TO-REORDER: FOLDERS
+    ══════════════════════════════════════════════════════════════════ */
+
+    let folderDragId = null;
+    let folderDragSheetId = null;
+
+    function onFolderDragStart(e, sheetId, folderId) {
+      folderDragId      = folderId;
+      folderDragSheetId = sheetId;
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', folderId);
+      e.stopPropagation();
+    }
+
+    function onFolderDragOver(e, card) {
+      if (!folderDragId || folderDragId === card.dataset.fid) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      document.querySelectorAll('.folder-card')
+               .forEach(c => c.classList.remove('folder-drag-over'));
+      card.classList.add('folder-drag-over');
+    }
+
+    function onFolderDrop(e, sheetId, targetFolderId) {
+      e.preventDefault();
+      document.querySelectorAll('.folder-card')
+               .forEach(c => c.classList.remove('folder-drag-over'));
+      if (!folderDragId || folderDragId === targetFolderId || folderDragSheetId !== sheetId) return;
+      const sh  = state.sheets.find(s => s.id === sheetId);
+      if (!sh) return;
+      const sorted = [...sh.folders].sort((a, b) => a.order - b.order);
+      const si     = sorted.findIndex(f => f.id === folderDragId);
+      const ti     = sorted.findIndex(f => f.id === targetFolderId);
+      if (si < 0 || ti < 0) return;
+      const [moved] = sorted.splice(si, 1);
+      sorted.splice(ti, 0, moved);
+      sorted.forEach((f, i) => { f.order = i; });
+      folderDragId = null;
+      persist();
+      renderMain();
+    }
+
+    function onFolderDragEnd() {
+      document.querySelectorAll('.folder-card')
+               .forEach(c => c.classList.remove('folder-drag-over'));
+      folderDragId = null;
+    }
+
+
+    /* ══════════════════════════════════════════════════════════════════
+       PHASE 2 — DRAG-TO-REORDER: LINKS
+    ══════════════════════════════════════════════════════════════════ */
+
+    let linkDragId       = null;
+    let linkDragFolderId = null;
+
+    function onLinkDragStart(e, folderId, linkId) {
+      linkDragId       = linkId;
+      linkDragFolderId = folderId;
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', linkId);
+      e.stopPropagation();
+    }
+
+    function onLinkDragOver(e, row, folderId) {
+      if (!linkDragId || linkDragId === row.dataset.lid || linkDragFolderId !== folderId) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      document.querySelectorAll('.link-row')
+               .forEach(r => r.classList.remove('link-drag-over'));
+      row.classList.add('link-drag-over');
+    }
+
+    function onLinkDrop(e, sheetId, folderId, targetLinkId) {
+      e.preventDefault();
+      document.querySelectorAll('.link-row')
+               .forEach(r => r.classList.remove('link-drag-over'));
+      if (!linkDragId || linkDragId === targetLinkId || linkDragFolderId !== folderId) return;
+      const sh  = state.sheets.find(s => s.id === sheetId);
+      const fo  = sh && sh.folders.find(f => f.id === folderId);
+      if (!fo) return;
+      const sorted = [...fo.links].sort((a, b) => a.order - b.order);
+      const si     = sorted.findIndex(l => l.id === linkDragId);
+      const ti     = sorted.findIndex(l => l.id === targetLinkId);
+      if (si < 0 || ti < 0) return;
+      const [moved] = sorted.splice(si, 1);
+      sorted.splice(ti, 0, moved);
+      sorted.forEach((l, i) => { l.order = i; });
+      linkDragId = null;
+      persist();
+      renderMain();
+    }
+
+    function onLinkDragEnd() {
+      document.querySelectorAll('.link-row')
+               .forEach(r => r.classList.remove('link-drag-over'));
+      linkDragId = null;
+    }
+
+
+    /* ══════════════════════════════════════════════════════════════════
+       PHASE 2 — BUILD LINK ROW DOM
+    ══════════════════════════════════════════════════════════════════ */
+
+    function buildLinkRow(sheetId, folderId, lk) {
+      const row       = document.createElement('div');
+      row.className   = 'link-row';
+      row.dataset.lid = lk.id;
+      row.draggable   = false;
+
+      // ── Drag handle
+      const dh     = document.createElement('div');
+      dh.className = 'link-drag-hdl';
+      dh.innerHTML = SVG_DOTS;
+      dh.title     = 'Drag to reorder';
+      dh.addEventListener('mousedown', () => { row.draggable = true; });
+      dh.addEventListener('mouseup',   () => { row.draggable = false; });
+
+      // ── Name cell
+      const nmCell            = document.createElement('div');
+      nmCell.className        = 'link-cell';
+      nmCell.dataset.field    = 'name';
+      renderCellDisplay(nmCell, 'name', lk.name);
+
+      // ── URL cell
+      const urlCell           = document.createElement('div');
+      urlCell.className       = 'link-cell';
+      urlCell.dataset.field   = 'url';
+      renderCellDisplay(urlCell, 'url', lk.url);
+
+      // ── Description cell
+      const descCell          = document.createElement('div');
+      descCell.className      = 'link-cell';
+      descCell.dataset.field  = 'description';
+      renderCellDisplay(descCell, 'description', lk.description);
+
+      // ── Actions column
+      const actions       = document.createElement('div');
+      actions.className   = 'link-actions';
+
+      const copyBtn       = document.createElement('button');
+      copyBtn.className   = 'lac lac-copy' + (lk.url ? '' : ' lac-disabled');
+      copyBtn.title       = lk.url ? 'Copy URL' : 'No URL to copy';
+      copyBtn.innerHTML   = SVG_COPY;
+      copyBtn.addEventListener('click', e => {
+        e.stopPropagation();
+        // Re-read from live state so we get latest URL even if edited after row was built
+        const sh2 = state.sheets.find(s => s.id === sheetId);
+        const fo2 = sh2 && sh2.folders.find(f => f.id === folderId);
+        const lk2 = fo2 && fo2.links.find(l => l.id === lk.id);
+        if (!lk2 || !lk2.url) return;
+        copyToClipboard(lk2.url, copyBtn);
+      });
+
+      const delBtn        = document.createElement('button');
+      delBtn.className    = 'lac lac-del';
+      delBtn.title        = 'Delete link';
+      delBtn.innerHTML    = SVG_TRASH;
+      delBtn.addEventListener('click', e => {
+        e.stopPropagation();
+        deleteLink(sheetId, folderId, lk.id);
+      });
+
+      actions.appendChild(copyBtn);
+      actions.appendChild(delBtn);
+
+      // ── Click any cell → edit
+      [nmCell, urlCell, descCell].forEach(cell => {
+        cell.addEventListener('click', () =>
+          startCellEdit(cell, sheetId, folderId, lk.id, cell.dataset.field)
+        );
+      });
+
+      // ── Drag-to-reorder wiring
+      row.addEventListener('dragstart', e => onLinkDragStart(e, folderId, lk.id));
+      row.addEventListener('dragover',  e => onLinkDragOver(e, row, folderId));
+      row.addEventListener('drop',      e => onLinkDrop(e, sheetId, folderId, lk.id));
+      row.addEventListener('dragend',   onLinkDragEnd);
+
+      row.append(dh, nmCell, urlCell, descCell, actions);
+      return row;
+    }
+
+
     /* ──────────────────────────────────────────────────────────────────
        RENDER — MAIN AREA
     ────────────────────────────────────────────────────────────────── */
@@ -637,23 +1429,17 @@
       const sheet = activeSheet();
 
       if (!sheet) {
-        area.innerHTML = `
-          <div class="empty-state">
-            <span>No sheets found.</span>
-          </div>`;
+        area.innerHTML = `<div class="empty-state"><span>No sheets found.</span></div>`;
         return;
       }
 
       if (!sheet.folders.length) {
-        // PRD exact copy: "No folders yet — click + Add Folder to get started"
         area.innerHTML = `
           <div class="empty-state">
             <svg width="54" height="54" viewBox="0 0 54 54" fill="none"
-                 xmlns="http://www.w3.org/2000/svg" color="var(--muted)" aria-hidden="true">
-              <!-- folder outline -->
+                 color="var(--muted)" aria-hidden="true">
               <path d="M7 44V20a2 2 0 0 1 2-2h13l4.5 4.5H47a2 2 0 0 1 2 2v19.5a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2Z"
                     stroke="currentColor" stroke-width="1.6" fill="none" stroke-linejoin="round"/>
-              <!-- plus icon -->
               <path d="M27 30.5v9M22.5 35h9"
                     stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
             </svg>
@@ -662,8 +1448,123 @@
         return;
       }
 
-      // ── Phase 2 will render folder + link list here ──
+      // ── Build folder list ────────────────────────────────────────
+      const list   = document.createElement('div');
+      list.id      = 'folder-list';
+      const folders = [...sheet.folders].sort((a, b) => a.order - b.order);
+
+      folders.forEach(fo => {
+        const links = [...fo.links].sort((a, b) => a.order - b.order);
+
+        // ── Folder card ──────────────────────────────────────────
+        const card     = document.createElement('div');
+        card.className = 'folder-card' + (fo.collapsed ? ' collapsed' : '');
+        card.dataset.fid = fo.id;
+        card.draggable   = false;
+
+        // ── Folder header ────────────────────────────────────────
+        const hdr     = document.createElement('div');
+        hdr.className = 'folder-header';
+
+        const chevron     = document.createElement('span');
+        chevron.className = 'folder-chevron';
+        chevron.innerHTML = SVG_CHEVRON;
+
+        const nmEl     = document.createElement('span');
+        nmEl.className = 'folder-name';
+        nmEl.textContent = fo.name;
+
+        const badge     = document.createElement('span');
+        badge.className = 'folder-badge';
+        badge.textContent = links.length;
+
+        const dragHdl     = document.createElement('span');
+        dragHdl.className = 'folder-drag-hdl';
+        dragHdl.innerHTML = SVG_DOTS;
+        dragHdl.title     = 'Drag to reorder';
+        // Drag handle: set card draggable only while handle is held
+        dragHdl.addEventListener('mousedown', () => { card.draggable = true; });
+        dragHdl.addEventListener('mouseup',   () => { card.draggable = false; });
+
+        const delBtn     = document.createElement('button');
+        delBtn.className = 'folder-del';
+        delBtn.title     = 'Delete folder';
+        delBtn.innerHTML = SVG_TRASH;
+
+        hdr.append(chevron, nmEl, badge, dragHdl, delBtn);
+
+        // Header click → collapse/expand (ignore clicks on interactive children)
+        hdr.addEventListener('click', e => {
+          if (e.target.closest('.folder-del') ||
+              e.target.closest('.folder-drag-hdl') ||
+              e.target.closest('.folder-rename-inp')) return;
+          toggleFolder(sheet.id, fo.id);
+        });
+
+        // Double-click name → inline rename
+        nmEl.addEventListener('dblclick', e => {
+          e.stopPropagation();
+          startFolderRename(card, sheet.id, fo.id, nmEl);
+        });
+
+        // Delete button
+        delBtn.addEventListener('click', e => {
+          e.stopPropagation();
+          deleteFolder(sheet.id, fo.id);
+        });
+
+        // Folder drag-to-reorder wiring
+        card.addEventListener('dragstart', e => onFolderDragStart(e, sheet.id, fo.id));
+        card.addEventListener('dragover',  e => onFolderDragOver(e, card));
+        card.addEventListener('drop',      e => onFolderDrop(e, sheet.id, fo.id));
+        card.addEventListener('dragend',   onFolderDragEnd);
+        // Reset draggable when mouse leaves so accidental drags don't fire
+        card.addEventListener('dragend', () => { card.draggable = false; });
+
+        // ── Folder body ──────────────────────────────────────────
+        const body     = document.createElement('div');
+        body.className = 'folder-body';
+
+        if (links.length > 0) {
+          // Column header
+          const colHdr     = document.createElement('div');
+          colHdr.className = 'link-col-hdr';
+          colHdr.innerHTML = `
+            <span></span>
+            <span>Name</span>
+            <span>URL</span>
+            <span>Description</span>
+            <span></span>`;
+          body.appendChild(colHdr);
+
+          // Link rows wrapper (needed for :last-child border removal)
+          const rowsWrap     = document.createElement('div');
+          rowsWrap.className = 'link-rows-wrap';
+          links.forEach(lk => rowsWrap.appendChild(buildLinkRow(sheet.id, fo.id, lk)));
+          body.appendChild(rowsWrap);
+        } else {
+          const empty     = document.createElement('div');
+          empty.className = 'folder-empty';
+          empty.textContent = 'No links yet — click + Add Link below';
+          body.appendChild(empty);
+        }
+
+        // Add Link button
+        const alBar     = document.createElement('div');
+        alBar.className = 'add-link-bar';
+        const alBtn     = document.createElement('button');
+        alBtn.className = 'btn-add-link';
+        alBtn.innerHTML = SVG_PLUS + ' + Add Link';
+        alBtn.addEventListener('click', () => addLink(sheet.id, fo.id));
+        alBar.appendChild(alBtn);
+        body.appendChild(alBar);
+
+        card.append(hdr, body);
+        list.appendChild(card);
+      });
+
       area.innerHTML = '';
+      area.appendChild(list);
     }
 
 
@@ -832,8 +1733,29 @@
         if (first) state.settings.activeSheetId = first.id;
       }
 
+      // ── Phase 2 migration: ensure all objects carry required fields ──
+      state.sheets.forEach(sh => {
+        if (!Array.isArray(sh.folders)) sh.folders = [];
+        sh.folders.forEach((fo, fi) => {
+          if (typeof fo.collapsed !== 'boolean') fo.collapsed = false;
+          if (typeof fo.order     === 'undefined') fo.order   = fi;
+          if (!Array.isArray(fo.links)) fo.links = [];
+          fo.links.forEach((lk, li) => {
+            if (typeof lk.name        === 'undefined') lk.name        = '';
+            if (typeof lk.url         === 'undefined') lk.url         = '';
+            if (typeof lk.description === 'undefined') lk.description = '';
+            if (typeof lk.order       === 'undefined') lk.order       = li;
+          });
+        });
+      });
+      persist();  // write back any migrated fields
+
       // Apply saved theme (Phase 4 adds the toggle; respect the saved value now)
       if (state.settings?.theme === 'light') document.body.classList.add('light');
+
+      // ── Wire up + Add Folder button ──
+      document.getElementById('btn-add-folder')
+              .addEventListener('click', addFolder);
 
       renderAll();
     })();
