@@ -752,6 +752,31 @@
     .link-row.search-highlight {
       animation: link-highlight 1.6s ease-out;
     }
+
+    /* ══════════════════════════════════════════════════════════════════
+       PHASE 4 — EXPORT / IMPORT + LIGHT MODE TOGGLE
+    ══════════════════════════════════════════════════════════════════ */
+
+    /* ── Top-action icon buttons (Export · Import · Theme toggle) ─── */
+    .tap-btn {
+      display:         flex;
+      align-items:     center;
+      justify-content: center;
+      width:           30px;
+      height:          30px;
+      border:          1px solid var(--b2);
+      background:      var(--card);
+      color:           var(--dim);
+      border-radius:   6px;
+      cursor:          pointer;
+      flex-shrink:     0;
+      transition: color 0.15s, background 0.15s, border-color 0.15s;
+    }
+    .tap-btn:hover {
+      color:         var(--white);
+      background:    var(--b1);
+      border-color:  var(--rust);
+    }
   </style>
 </head>
 
@@ -983,7 +1008,14 @@
        CONFIRMATION DIALOG
     ────────────────────────────────────────────────────────────────── */
 
-    function showConfirm(title, msg, onOk) {
+    /**
+     * Generic confirmation dialog.
+     * opts.okLabel  — label for the confirm button (default: 'Delete')
+     * opts.okClass  — CSS class for the confirm button (default: 'btn-danger')
+     */
+    function showConfirm(title, msg, onOk, opts = {}) {
+      const okLabel = opts.okLabel ?? 'Delete';
+      const okClass = opts.okClass ?? 'btn-danger';
       const el = document.createElement('div');
       el.className = 'dlg-overlay';
       el.tabIndex  = -1;
@@ -992,7 +1024,7 @@
           <div class="dlg-title">${title}</div>
           <div class="dlg-msg">${msg}</div>
           <div class="dlg-actions">
-            <button class="btn btn-danger" data-r="ok">Delete</button>
+            <button class="btn ${okClass}" data-r="ok">${okLabel}</button>
             <button class="btn btn-ghost"  data-r="cancel">Cancel</button>
           </div>
         </div>`;
@@ -1088,6 +1120,44 @@
       stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
       <line x1="6" y1="1" x2="6" y2="11"/>
       <line x1="1" y1="6" x2="11" y2="6"/></svg>`;
+
+    /* ── Phase 4 icons ──────────────────────────────────────────── */
+
+    /** Sun — shown in dark mode; click switches to light */
+    const SVG_SUN = `<svg width="15" height="15" viewBox="0 0 16 16" fill="none"
+      stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="8" cy="8" r="2.8"/>
+      <line x1="8" y1="1"    x2="8"    y2="2.6"/>
+      <line x1="8" y1="13.4" x2="8"    y2="15"/>
+      <line x1="1"    y1="8" x2="2.6"  y2="8"/>
+      <line x1="13.4" y1="8" x2="15"   y2="8"/>
+      <line x1="3.1"  y1="3.1"  x2="4.2"  y2="4.2"/>
+      <line x1="11.8" y1="11.8" x2="12.9" y2="12.9"/>
+      <line x1="12.9" y1="3.1"  x2="11.8" y2="4.2"/>
+      <line x1="4.2"  y1="11.8" x2="3.1"  y2="12.9"/>
+    </svg>`;
+
+    /** Moon — shown in light mode; click switches to dark */
+    const SVG_MOON = `<svg width="14" height="14" viewBox="0 0 16 16" fill="none"
+      stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M13.5 10.5A6 6 0 0 1 5.5 2.5a6.1 6.1 0 1 0 8 8Z"/>
+    </svg>`;
+
+    /** Export / download */
+    const SVG_EXPORT = `<svg width="14" height="14" viewBox="0 0 16 16" fill="none"
+      stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M2 11v2a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-2"/>
+      <polyline points="5 7.5 8 10.5 11 7.5"/>
+      <line x1="8" y1="2" x2="8" y2="10.5"/>
+    </svg>`;
+
+    /** Import / upload */
+    const SVG_IMPORT = `<svg width="14" height="14" viewBox="0 0 16 16" fill="none"
+      stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M2 11v2a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-2"/>
+      <polyline points="5 5 8 2 11 5"/>
+      <line x1="8" y1="2" x2="8" y2="10.5"/>
+    </svg>`;
 
 
     /* ══════════════════════════════════════════════════════════════════
@@ -1671,6 +1741,224 @@
     }
 
 
+    /* ══════════════════════════════════════════════════════════════════
+       PHASE 4 — EXPORT / IMPORT + LIGHT MODE
+    ══════════════════════════════════════════════════════════════════ */
+
+    /* ── Export ──────────────────────────────────────────────────────
+       Serialises the full state object to a dated JSON file and
+       triggers a browser download. No server involved — Blob + anchor.
+    ────────────────────────────────────────────────────────────────── */
+    function exportData() {
+      const filename = `url-manager-${isoToday()}.json`;
+      const payload  = JSON.stringify(state, null, 2);
+      const blob     = new Blob([payload], { type: 'application/json' });
+      const url      = URL.createObjectURL(blob);
+      const a        = document.createElement('a');
+      a.href         = url;
+      a.download     = filename;
+      a.style.cssText = 'display:none;position:fixed;';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+
+    /* ── Import ──────────────────────────────────────────────────────
+       Opens a .json file picker.  On selection: validates JSON and
+       shape, shows a confirmation dialog, then replaces state on
+       confirm.  Invalid files show an error and leave state untouched.
+    ────────────────────────────────────────────────────────────────── */
+    function importData() {
+      const input     = document.createElement('input');
+      input.type      = 'file';
+      input.accept    = '.json';
+      input.style.cssText = 'display:none;position:fixed;';
+      document.body.appendChild(input);
+
+      // Clean up if the user dismisses the picker without choosing a file
+      input.addEventListener('cancel', () => input.remove());
+
+      input.addEventListener('change', () => {
+        const file = input.files && input.files[0];
+        input.remove();
+        if (!file) return;
+
+        const reader = new FileReader();
+
+        reader.onload = (evt) => {
+          // ── Step 1: Parse JSON ──────────────────────────────────
+          let parsed;
+          try {
+            parsed = JSON.parse(evt.target.result);
+          } catch {
+            showImportError('This file is not valid JSON. No changes were made.');
+            return;
+          }
+
+          // ── Step 2: Shape validation ───────────────────────────
+          if (
+            !parsed                         ||
+            typeof parsed !== 'object'      ||
+            !parsed.version                 ||
+            !Array.isArray(parsed.sheets)
+          ) {
+            showImportError(
+              'This file doesn\'t look like a URL Manager backup. ' +
+              'No changes were made.'
+            );
+            return;
+          }
+
+          // ── Step 3: Confirmation dialog ────────────────────────
+          showConfirm(
+            'Import Data',
+            'This will replace <strong>all current data</strong> with the ' +
+            'contents of the imported file. This cannot be undone.',
+            () => {
+              // Apply the imported state
+              state = parsed;
+
+              // Ensure settings object is complete
+              if (!state.settings || typeof state.settings !== 'object') {
+                state.settings = {};
+              }
+              if (!state.settings.theme) state.settings.theme = 'dark';
+
+              // Phase 2 migration: add any missing fields so the app
+              // won't crash on older or partially-formed backup files
+              state.sheets.forEach((sh, si) => {
+                if (typeof sh.order       === 'undefined') sh.order   = si;
+                if (!Array.isArray(sh.folders)) sh.folders = [];
+                sh.folders.forEach((fo, fi) => {
+                  if (typeof fo.collapsed !== 'boolean')  fo.collapsed = false;
+                  if (typeof fo.order     === 'undefined') fo.order    = fi;
+                  if (!Array.isArray(fo.links)) fo.links = [];
+                  fo.links.forEach((lk, li) => {
+                    if (typeof lk.name        === 'undefined') lk.name        = '';
+                    if (typeof lk.url         === 'undefined') lk.url         = '';
+                    if (typeof lk.description === 'undefined') lk.description = '';
+                    if (typeof lk.order       === 'undefined') lk.order       = li;
+                  });
+                });
+              });
+
+              // Validate activeSheetId still points to a real sheet
+              if (!state.sheets.find(s => s.id === state.settings.activeSheetId)) {
+                const first = [...state.sheets].sort((a, b) => a.order - b.order)[0];
+                state.settings.activeSheetId = first ? first.id : '';
+              }
+
+              // Apply the imported file's theme
+              const nowLight = state.settings.theme === 'light';
+              document.body.classList.toggle('light', nowLight);
+              // Sync the theme button icon
+              const themeBtn = document.getElementById('btn-theme');
+              if (themeBtn) {
+                themeBtn.innerHTML = nowLight ? SVG_MOON : SVG_SUN;
+                themeBtn.title     = nowLight
+                  ? 'Switch to dark mode'
+                  : 'Switch to light mode';
+              }
+
+              persist();
+              renderAll();
+            },
+            { okLabel: 'Replace Data', okClass: 'btn-danger' }
+          );
+        };
+
+        reader.onerror = () => {
+          showImportError('Could not read the file. No changes were made.');
+        };
+
+        reader.readAsText(file);
+      });
+
+      input.click();
+    }
+
+
+    /* ── Import error dialog ─────────────────────────────────────────
+       Single-button (OK) dialog — used only for import failures.
+       State is never modified before this dialog is shown.
+    ────────────────────────────────────────────────────────────────── */
+    function showImportError(msg) {
+      const el = document.createElement('div');
+      el.className = 'dlg-overlay';
+      el.tabIndex  = -1;
+      el.innerHTML = `
+        <div class="dlg-box" role="alertdialog" aria-modal="true">
+          <div class="dlg-title">Import Error</div>
+          <div class="dlg-msg">${esc(msg)}</div>
+          <div class="dlg-actions">
+            <button class="btn btn-ghost" data-r="ok">OK</button>
+          </div>
+        </div>`;
+      document.body.appendChild(el);
+      el.focus();
+      const close = () => el.remove();
+      el.querySelector('[data-r="ok"]').onclick = close;
+      el.addEventListener('click',   e => { if (e.target === el) close(); });
+      el.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
+    }
+
+
+    /* ── Theme toggle ────────────────────────────────────────────────
+       Toggles body.light, saves preference to state.settings.theme,
+       persists, and updates the button icon.
+       The 0.2s colour transition declared on body/#top-bar/#main-area/
+       #tab-bar in Phase 1 CSS handles the visual handoff.
+    ────────────────────────────────────────────────────────────────── */
+    function toggleTheme() {
+      const isNowLight = document.body.classList.toggle('light');
+      state.settings.theme = isNowLight ? 'light' : 'dark';
+      persist();
+      const btn = document.getElementById('btn-theme');
+      if (!btn) return;
+      btn.innerHTML = isNowLight ? SVG_MOON : SVG_SUN;
+      btn.title     = isNowLight ? 'Switch to dark mode' : 'Switch to light mode';
+    }
+
+
+    /* ── Build top-action buttons ────────────────────────────────────
+       Called once from init, after the saved theme is applied so the
+       theme button renders the correct initial icon.
+    ────────────────────────────────────────────────────────────────── */
+    function initTopActions() {
+      const bar = document.getElementById('top-actions');
+      bar.innerHTML = '';
+
+      // Export button
+      const expBtn       = document.createElement('button');
+      expBtn.id          = 'btn-export';
+      expBtn.className   = 'tap-btn';
+      expBtn.title       = 'Export data as JSON';
+      expBtn.innerHTML   = SVG_EXPORT;
+      expBtn.addEventListener('click', exportData);
+
+      // Import button
+      const impBtn       = document.createElement('button');
+      impBtn.id          = 'btn-import';
+      impBtn.className   = 'tap-btn';
+      impBtn.title       = 'Import data from JSON';
+      impBtn.innerHTML   = SVG_IMPORT;
+      impBtn.addEventListener('click', importData);
+
+      // Theme toggle — icon reflects current theme at init time
+      const themeBtn     = document.createElement('button');
+      themeBtn.id        = 'btn-theme';
+      themeBtn.className = 'tap-btn';
+      const startsLight  = document.body.classList.contains('light');
+      themeBtn.innerHTML = startsLight ? SVG_MOON : SVG_SUN;
+      themeBtn.title     = startsLight ? 'Switch to dark mode' : 'Switch to light mode';
+      themeBtn.addEventListener('click', toggleTheme);
+
+      bar.append(expBtn, impBtn, themeBtn);
+    }
+
+
     /* ──────────────────────────────────────────────────────────────────
        RENDER — MAIN AREA
     ────────────────────────────────────────────────────────────────── */
@@ -2001,8 +2289,12 @@
       });
       persist();  // write back any migrated fields
 
-      // Apply saved theme (Phase 4 adds the toggle; respect the saved value now)
+      // Apply saved theme — must happen before initTopActions so the button
+      // renders the correct initial icon (sun vs moon)
       if (state.settings?.theme === 'light') document.body.classList.add('light');
+
+      // ── Phase 4: build Export / Import / Theme buttons in top bar ──
+      initTopActions();
 
       // ── Wire up + Add Folder button ──
       document.getElementById('btn-add-folder')
