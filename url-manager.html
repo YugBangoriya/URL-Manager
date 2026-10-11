@@ -135,8 +135,18 @@
     #brand .b-url { color: var(--rust2); font-weight: 800; }
     #brand .b-mgr { color: var(--dim);   font-weight: 600; }
 
-    /* Spacer pushes Phase-4 action buttons to the right */
-    #top-spacer { flex: 1; }
+    /* Phase 3: search wrap takes the centre slot; Phase 4 will populate #top-actions */
+    #search-wrap {
+      flex: 1;
+      position: relative;
+      max-width: 520px;
+    }
+    #top-actions {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
 
     /* ══════════════════════════════════════════════════════════════════
        EMPTY STATE  ·  shown when active sheet has no folders
@@ -647,6 +657,101 @@
       transition: color 0.15s;
     }
     .btn-add-link:hover { color: var(--rust2); }
+
+    /* ══════════════════════════════════════════════════════════════════
+       PHASE 3 — SEARCH
+    ══════════════════════════════════════════════════════════════════ */
+
+    /* ── Search input ─────────────────────────────────────────────── */
+    #search-input {
+      width: 100%;
+      height: 32px;
+      padding: 0 12px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      color: var(--white);
+      background: var(--b1);
+      border: 1px solid var(--b2);
+      border-radius: 6px;
+      outline: none;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    #search-input::placeholder { color: var(--muted); font-style: italic; }
+    #search-input:focus {
+      border-color: var(--rust);
+      background: var(--card2);
+    }
+
+    /* ── Results dropdown ─────────────────────────────────────────── */
+    #search-dropdown {
+      position: absolute;
+      top: calc(100% + 6px);
+      left: 0;
+      right: 0;
+      z-index: 150;
+      display: none;
+      overflow: hidden;
+      overflow-y: auto;
+      max-height: 320px;
+      background: var(--card);
+      border: 1px solid var(--b2);
+      border-radius: 8px;
+      box-shadow: 0 8px 24px rgba(0,0,0,.50);
+    }
+    #search-dropdown.open { display: block; }
+
+    /* ── Individual result row ────────────────────────────────────── */
+    .search-result {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      padding: 8px 12px;
+      cursor: pointer;
+      border-bottom: 1px solid var(--b1);
+      transition: background 0.15s;
+    }
+    .search-result:last-child { border-bottom: none; }
+    .search-result:hover { background: var(--b1); }
+
+    .sr-name {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      color: var(--white);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    /* Placeholder name when link has no name field */
+    .sr-name.sr-unnamed { color: var(--muted); font-style: italic; }
+
+    .sr-meta {
+      font-family: 'DM Mono', monospace;
+      font-size: 10.5px;
+      color: var(--muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* ── Empty results state ──────────────────────────────────────── */
+    .search-empty {
+      padding: 14px 16px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      color: var(--muted);
+      text-align: center;
+      font-style: italic;
+    }
+
+    /* ── Link row highlight — fires when navigating to a search result */
+    @keyframes link-highlight {
+      0%   { background-color: rgba(183,65,14,.30); }
+      70%  { background-color: rgba(183,65,14,.14); }
+      100% { background-color: transparent; }
+    }
+    .link-row.search-highlight {
+      animation: link-highlight 1.6s ease-out;
+    }
   </style>
 </head>
 
@@ -657,9 +762,14 @@
     <div id="brand">
       <span class="b-url">url</span><span class="b-mgr">mgr</span>
     </div>
-    <!-- Phase 3: search input slot -->
-    <div id="top-spacer"></div>
-    <!-- Phase 4: import / export / theme toggle slots -->
+    <!-- Phase 3: global search -->
+    <div id="search-wrap">
+      <input id="search-input" type="text" placeholder="Search…"
+             autocomplete="off" spellcheck="false" aria-label="Search links">
+      <div id="search-dropdown" role="listbox" aria-label="Search results"></div>
+    </div>
+    <!-- Phase 4: import / export / theme toggle -->
+    <div id="top-actions"></div>
   </header>
 
   <!-- ══ MAIN AREA ══════════════════════════════════════════════════ -->
@@ -1292,6 +1402,8 @@
     let linkDragId       = null;
     let linkDragFolderId = null;
 
+    let searchTimer = null;    // Phase 3: debounce handle for search input
+
     function onLinkDragStart(e, folderId, linkId) {
       linkDragId       = linkId;
       linkDragFolderId = folderId;
@@ -1417,6 +1529,145 @@
 
       row.append(dh, nmCell, urlCell, descCell, actions);
       return row;
+    }
+
+
+    /* ══════════════════════════════════════════════════════════════════
+       PHASE 3 — SEARCH
+    ══════════════════════════════════════════════════════════════════ */
+
+    /**
+     * Search across all sheets, folders, and links for the given query string.
+     * Matches link name, url, and description fields (case-insensitive).
+     * Returns an array of result objects.
+     */
+    function performSearch(query) {
+      const q = query.trim().toLowerCase();
+      if (!q) return [];
+      const results = [];
+      state.sheets.forEach(sheet => {
+        sheet.folders.forEach(folder => {
+          folder.links.forEach(link => {
+            const hit =
+              (link.name        && link.name.toLowerCase().includes(q))        ||
+              (link.url         && link.url.toLowerCase().includes(q))         ||
+              (link.description && link.description.toLowerCase().includes(q));
+            if (hit) {
+              results.push({
+                sheetId:    sheet.id,
+                sheetName:  sheet.name,
+                folderId:   folder.id,
+                folderName: folder.name,
+                linkId:     link.id,
+                linkName:   link.name,   // may be empty string
+                linkUrl:    link.url,
+              });
+            }
+          });
+        });
+      });
+      return results;
+    }
+
+    /** Build and open the results dropdown for the given query + results array */
+    function showSearchDropdown(results, query) {
+      const dd = document.getElementById('search-dropdown');
+      dd.innerHTML = '';
+
+      if (!results.length) {
+        const empty     = document.createElement('div');
+        empty.className = 'search-empty';
+        // PRD exact copy: No results for "[query]"
+        empty.textContent = `No results for "${query}"`;
+        dd.appendChild(empty);
+      } else {
+        results.forEach(r => {
+          const item     = document.createElement('div');
+          item.className = 'search-result';
+          item.setAttribute('role', 'option');
+
+          // Link name — fall back to URL, then "(unnamed)" if both empty
+          const nameEl     = document.createElement('div');
+          const display    = r.linkName || r.linkUrl;
+          nameEl.className = 'sr-name' + (display ? '' : ' sr-unnamed');
+          nameEl.textContent = display || '(unnamed link)';
+
+          // Sheet / Folder breadcrumb
+          const metaEl     = document.createElement('div');
+          metaEl.className = 'sr-meta';
+          metaEl.textContent = `${r.sheetName} / ${r.folderName}`;
+
+          item.append(nameEl, metaEl);
+
+          // Click: close search first, then navigate
+          item.addEventListener('click', () => {
+            closeSearch();
+            navigateToResult(r);
+          });
+
+          dd.appendChild(item);
+        });
+      }
+
+      dd.classList.add('open');
+    }
+
+    /**
+     * Clear the search input and close the results dropdown.
+     * Called when a result is selected or Escape is pressed.
+     */
+    function closeSearch() {
+      const inp = document.getElementById('search-input');
+      const dd  = document.getElementById('search-dropdown');
+      if (inp) inp.value = '';
+      if (dd)  dd.classList.remove('open');
+    }
+
+    /**
+     * Close the results dropdown without clearing the input.
+     * Called when clicking outside the search wrap.
+     */
+    function collapseDropdown() {
+      const dd = document.getElementById('search-dropdown');
+      if (dd) dd.classList.remove('open');
+    }
+
+    /**
+     * Switch to the result's sheet (if needed), expand its folder (if collapsed),
+     * then scroll to and briefly highlight the link row.
+     */
+    function navigateToResult(result) {
+      // Switch sheet if this result belongs to a different one
+      if (state.settings.activeSheetId !== result.sheetId) {
+        state.settings.activeSheetId = result.sheetId;
+      }
+
+      // Ensure the containing folder is expanded so the row is visible
+      const sh = state.sheets.find(s => s.id === result.sheetId);
+      const fo = sh && sh.folders.find(f => f.id === result.folderId);
+      if (fo && fo.collapsed) {
+        fo.collapsed = false;
+      }
+
+      // Persist state + re-render (always safe — handles both sheet switch and uncollapse)
+      persist();
+      renderAll();
+
+      // After the DOM is updated, scroll to the row and flash the highlight
+      // setTimeout 20ms gives the browser one paint cycle to complete the render
+      setTimeout(() => {
+        const row = document.querySelector(`.link-row[data-lid="${result.linkId}"]`);
+        if (!row) return;
+        row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        // Remove any existing highlight class first (edge case: repeated searches)
+        row.classList.remove('search-highlight');
+        // Force reflow so re-adding the class re-triggers the animation
+        void row.offsetWidth;
+        row.classList.add('search-highlight');
+        row.addEventListener('animationend', () => {
+          row.classList.remove('search-highlight');
+        }, { once: true });
+      }, 20);
     }
 
 
@@ -1756,6 +2007,41 @@
       // ── Wire up + Add Folder button ──
       document.getElementById('btn-add-folder')
               .addEventListener('click', addFolder);
+
+      // ── Wire up search (Phase 3) ─────────────────────────────────
+      const searchInput = document.getElementById('search-input');
+
+      // Live search with 200ms debounce
+      searchInput.addEventListener('input', () => {
+        clearTimeout(searchTimer);
+        const raw = searchInput.value;
+        // If the input is empty or blank, close the dropdown immediately
+        if (!raw.trim()) {
+          collapseDropdown();
+          return;
+        }
+        searchTimer = setTimeout(() => {
+          const results = performSearch(raw);
+          showSearchDropdown(results, raw.trim());
+        }, 200);
+      });
+
+      // Escape: clear input + close dropdown
+      searchInput.addEventListener('keydown', e => {
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          closeSearch();
+          searchInput.blur();
+        }
+      });
+
+      // Click outside search-wrap: close dropdown (keep input text)
+      document.addEventListener('click', e => {
+        const wrap = document.getElementById('search-wrap');
+        if (wrap && !wrap.contains(e.target)) {
+          collapseDropdown();
+        }
+      });
 
       renderAll();
     })();
