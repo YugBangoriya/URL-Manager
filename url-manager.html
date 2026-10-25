@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,62 +9,83 @@
   <!-- Google Fonts: Syne · DM Mono · DM Sans (PRD spec) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600&family=Syne:wght@400;600;700;800&display=swap"
+    rel="stylesheet">
 
   <style>
     /* ══════════════════════════════════════════════════════════════════
        DESIGN TOKENS  ·  Exact values from PRD — do not change
     ══════════════════════════════════════════════════════════════════ */
     :root {
-      --bg:    #020101;
-      --sb:    #0c0504;
-      --card:  #110605;
+      --bg: #020101;
+      --sb: #0c0504;
+      --card: #110605;
       --card2: #160807;
-      --b1:    #1e0e09;
-      --b2:    #2d1610;
-      --rust:  #b7410e;
+      --b1: #1e0e09;
+      --b2: #2d1610;
+      --rust: #b7410e;
       --rust2: #d4531a;
       --amber: #e07b2a;
       --white: #ffffff;
-      --dim:   rgba(255,255,255,.55);
-      --muted: rgba(255,255,255,.28);
-      --faint: rgba(255,255,255,.10);
+      --dim: rgba(255, 255, 255, .55);
+      --muted: rgba(255, 255, 255, .28);
+      --faint: rgba(255, 255, 255, .10);
       --green: #5faa3e;
-      --blue:  #4a9ebb;
+      --blue: #4a9ebb;
     }
 
     /* Light mode overrides — colour toggled in Phase 4 */
     body.light {
-      --bg:    #ffffff;
-      --sb:    #f5f5f5;
-      --card:  #f9f9f9;
+      --bg: #ffffff;
+      --sb: #f5f5f5;
+      --card: #f9f9f9;
       --card2: #f0f0f0;
-      --b1:    #e0e0e0;
-      --b2:    #cccccc;
+      --b1: #e0e0e0;
+      --b2: #cccccc;
       --white: #1a1a1a;
-      --dim:   rgba(0,0,0,.65);
-      --muted: rgba(0,0,0,.40);
-      --faint: rgba(0,0,0,.07);
+      --dim: rgba(0, 0, 0, .65);
+      --muted: rgba(0, 0, 0, .40);
+      --faint: rgba(0, 0, 0, .07);
       /* --rust, --rust2, --amber, --green, --blue: unchanged */
     }
 
     /* ══════════════════════════════════════════════════════════════════
        RESET
     ══════════════════════════════════════════════════════════════════ */
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
     /* Selection highlight */
-    ::selection { background: rgba(183,65,14,.35); }
+    ::selection {
+      background: rgba(183, 65, 14, .35);
+    }
 
     /* Custom scrollbar — 4px, --b2 thumb, no track */
-    ::-webkit-scrollbar              { width: 4px; height: 4px; }
-    ::-webkit-scrollbar-track        { background: transparent; }
-    ::-webkit-scrollbar-thumb        { background: var(--b2); border-radius: 2px; }
+    ::-webkit-scrollbar {
+      width: 4px;
+      height: 4px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--b2);
+      border-radius: 2px;
+    }
 
     /* ══════════════════════════════════════════════════════════════════
        BASE
     ══════════════════════════════════════════════════════════════════ */
-    html, body {
+    html,
+    body {
       height: 100%;
       font-family: 'DM Sans', sans-serif;
       font-size: 14px;
@@ -75,7 +97,10 @@
     }
 
     /* 0.2s colour transition for theme toggling (Phase 4) */
-    body, #top-bar, #main-area, #tab-bar {
+    body,
+    #top-bar,
+    #main-area,
+    #tab-bar {
       transition: background-color 0.2s, border-color 0.2s, color 0.2s;
     }
 
@@ -114,7 +139,8 @@
       height: 64px;
       z-index: 100;
       display: flex;
-      align-items: flex-end;    /* tabs sit flush with bar bottom */
+      align-items: flex-end;
+      /* tabs sit flush with bar bottom */
       gap: 2px;
       padding: 0 8px;
       overflow-x: auto;
@@ -132,8 +158,16 @@
       font-size: 15px;
       letter-spacing: -0.04em;
     }
-    #brand .b-url { color: var(--rust2); font-weight: 800; }
-    #brand .b-mgr { color: var(--dim);   font-weight: 600; }
+
+    #brand .b-url {
+      color: var(--rust2);
+      font-weight: 800;
+    }
+
+    #brand .b-mgr {
+      color: var(--dim);
+      font-weight: 600;
+    }
 
     /* Phase 3: search wrap takes the centre slot; Phase 4 will populate #top-actions */
     #search-wrap {
@@ -141,6 +175,7 @@
       position: relative;
       max-width: 520px;
     }
+
     #top-actions {
       flex-shrink: 0;
       display: flex;
@@ -164,8 +199,15 @@
       text-align: center;
       user-select: none;
     }
-    .empty-state svg    { opacity: 0.18; }
-    .empty-state strong { color: var(--dim); font-weight: 500; }
+
+    .empty-state svg {
+      opacity: 0.18;
+    }
+
+    .empty-state strong {
+      color: var(--dim);
+      font-weight: 500;
+    }
 
     /* ══════════════════════════════════════════════════════════════════
        SHEET TABS
@@ -180,7 +222,8 @@
       min-width: 96px;
       max-width: 172px;
       height: 52px;
-      padding: 0 24px 0 11px;   /* 24px right: space for ✕ button */
+      padding: 0 24px 0 11px;
+      /* 24px right: space for ✕ button */
       border-radius: 6px 6px 0 0;
       border-top: 2px solid transparent;
       cursor: pointer;
@@ -188,14 +231,20 @@
       background: transparent;
       transition: background 0.15s, border-color 0.15s;
     }
-    .sheet-tab:hover:not(.active) { background: var(--b1); }
+
+    .sheet-tab:hover:not(.active) {
+      background: var(--b1);
+    }
 
     /* Active tab: rust top border + bg matching main area (visual "lift") */
     .sheet-tab.active {
       border-top-color: var(--rust);
       background: var(--bg);
     }
-    .sheet-tab.active:hover { background: var(--bg); }
+
+    .sheet-tab.active:hover {
+      background: var(--bg);
+    }
 
     /* Tab name — Syne 600 */
     .tab-name {
@@ -210,7 +259,10 @@
       line-height: 1.3;
       transition: color 0.15s;
     }
-    .sheet-tab.active .tab-name { color: var(--white); }
+
+    .sheet-tab.active .tab-name {
+      color: var(--white);
+    }
 
     /* Last edit date — DM Mono small */
     .tab-date {
@@ -241,8 +293,16 @@
       cursor: pointer;
       transition: opacity 0.15s, background 0.15s, color 0.15s;
     }
-    .sheet-tab:hover .tab-del  { opacity: 1; pointer-events: auto; }
-    .tab-del:hover             { background: var(--rust); color: #fff; }
+
+    .sheet-tab:hover .tab-del {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .tab-del:hover {
+      background: var(--rust);
+      color: #fff;
+    }
 
     /* ── Inline rename input ─────────────────────────────────────── */
     .tab-rename-input {
@@ -260,8 +320,13 @@
     }
 
     /* ── Drag-to-reorder visual states ───────────────────────────── */
-    .sheet-tab.dragging  { opacity: 0.3; }
-    .sheet-tab.drag-over { box-shadow: inset 2px 0 0 var(--rust2); }
+    .sheet-tab.dragging {
+      opacity: 0.3;
+    }
+
+    .sheet-tab.drag-over {
+      box-shadow: inset 2px 0 0 var(--rust2);
+    }
 
     /* ── + New sheet button ──────────────────────────────────────── */
     #tab-add {
@@ -273,7 +338,8 @@
       height: 28px;
       border-radius: 6px;
       margin-left: 4px;
-      margin-bottom: 12px;   /* visually centres in 64px bar beside 52px tabs */
+      margin-bottom: 12px;
+      /* visually centres in 64px bar beside 52px tabs */
       cursor: pointer;
       color: var(--muted);
       font-size: 20px;
@@ -281,12 +347,17 @@
       line-height: 1;
       transition: background 0.15s, color 0.15s;
     }
-    #tab-add:hover { background: var(--b1); color: var(--white); }
+
+    #tab-add:hover {
+      background: var(--b1);
+      color: var(--white);
+    }
 
     /* ── Inline create-sheet input ───────────────────────────────── */
     .tab-create-input {
       flex-shrink: 0;
-      align-self: flex-end;   /* bottom-aligns with tabs */
+      align-self: flex-end;
+      /* bottom-aligns with tabs */
       height: 52px;
       min-width: 112px;
       padding: 0 10px;
@@ -299,7 +370,10 @@
       border-radius: 6px 6px 0 0;
       outline: none;
     }
-    .tab-create-input::placeholder { color: var(--muted); }
+
+    .tab-create-input::placeholder {
+      color: var(--muted);
+    }
 
     /* ══════════════════════════════════════════════════════════════════
        CONFIRMATION DIALOG
@@ -311,10 +385,11 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      background: rgba(2,1,1,.70);
+      background: rgba(2, 1, 1, .70);
       backdrop-filter: blur(4px);
       -webkit-backdrop-filter: blur(4px);
     }
+
     .dlg-box {
       width: 90%;
       max-width: 360px;
@@ -323,6 +398,7 @@
       border: 1px solid var(--b2);
       border-radius: 10px;
     }
+
     .dlg-title {
       font-family: 'Syne', sans-serif;
       font-weight: 700;
@@ -330,21 +406,37 @@
       color: var(--white);
       margin-bottom: 8px;
     }
+
     .dlg-msg {
       font-size: 13px;
       color: var(--dim);
       line-height: 1.55;
       margin-bottom: 22px;
     }
-    .dlg-actions { display: flex; justify-content: flex-end; gap: 8px; }
+
+    .dlg-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+    }
 
     /* Dialog entrance — brief scale-in creates a timing gap that prevents
        an accidental second click from landing on the confirm button        */
     @keyframes dlg-in {
-      from { opacity: 0; transform: scale(0.94) translateY(8px); }
-      to   { opacity: 1; transform: scale(1)    translateY(0);   }
+      from {
+        opacity: 0;
+        transform: scale(0.94) translateY(8px);
+      }
+
+      to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+      }
     }
-    .dlg-box { animation: dlg-in 0.15s ease; }
+
+    .dlg-box {
+      animation: dlg-in 0.15s ease;
+    }
 
     .btn {
       padding: 7px 15px;
@@ -357,28 +449,48 @@
       outline: none;
       transition: background 0.15s;
     }
-    .btn-ghost        { background: var(--b2);   color: var(--dim);   }
-    .btn-ghost:hover  { background: var(--b1);   color: var(--white); }
-    .btn-danger       { background: var(--rust);  color: #fff;         }
-    .btn-danger:hover { background: var(--rust2);                      }
+
+    .btn-ghost {
+      background: var(--b2);
+      color: var(--dim);
+    }
+
+    .btn-ghost:hover {
+      background: var(--b1);
+      color: var(--white);
+    }
+
+    .btn-danger {
+      background: var(--rust);
+      color: #fff;
+    }
+
+    .btn-danger:hover {
+      background: var(--rust2);
+    }
 
     /* ══════════════════════════════════════════════════════════════════
        PHASE 2 — FOLDERS + LINKS
     ══════════════════════════════════════════════════════════════════ */
 
     /* Extra bottom padding so content clears the pinned Add Folder bar */
-    #main-area { padding-bottom: 80px; }
+    #main-area {
+      padding-bottom: 80px;
+    }
 
     /* ── Add Folder Bar (pinned just above tab bar) ───────────────── */
     #folder-add-bar {
       position: fixed;
       bottom: 64px;
-      left: 0; right: 0;
+      left: 0;
+      right: 0;
       padding: 18px 24px 10px;
       background: linear-gradient(to top, var(--bg) 55%, transparent);
       z-index: 90;
-      pointer-events: none;       /* gradient doesn't block scroll */
+      pointer-events: none;
+      /* gradient doesn't block scroll */
     }
+
     #btn-add-folder {
       display: inline-flex;
       align-items: center;
@@ -395,6 +507,7 @@
       pointer-events: all;
       transition: color 0.15s, border-color 0.15s, background 0.15s;
     }
+
     #btn-add-folder:hover {
       color: var(--white);
       border-color: var(--rust);
@@ -415,7 +528,10 @@
       border-radius: 8px;
       overflow: hidden;
     }
-    .folder-card.folder-drag-over { box-shadow: 0 -3px 0 var(--rust); }
+
+    .folder-card.folder-drag-over {
+      box-shadow: 0 -3px 0 var(--rust);
+    }
 
     /* ── Folder header row ────────────────────────────────────────── */
     .folder-header {
@@ -427,7 +543,10 @@
       user-select: none;
       transition: background 0.15s;
     }
-    .folder-header:hover { background: var(--b1); }
+
+    .folder-header:hover {
+      background: var(--b1);
+    }
 
     /* Chevron rotates when collapsed */
     .folder-chevron {
@@ -437,7 +556,10 @@
       color: var(--muted);
       transition: transform 0.2s ease;
     }
-    .folder-card.collapsed .folder-chevron { transform: rotate(-90deg); }
+
+    .folder-card.collapsed .folder-chevron {
+      transform: rotate(-90deg);
+    }
 
     /* Folder name */
     .folder-name {
@@ -492,8 +614,14 @@
       opacity: 0;
       transition: opacity 0.15s;
     }
-    .folder-header:hover .folder-drag-hdl { opacity: 1; }
-    .folder-drag-hdl:active { cursor: grabbing; }
+
+    .folder-header:hover .folder-drag-hdl {
+      opacity: 1;
+    }
+
+    .folder-drag-hdl:active {
+      cursor: grabbing;
+    }
 
     /* Delete icon button */
     .folder-del {
@@ -501,7 +629,8 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      width: 24px; height: 24px;
+      width: 24px;
+      height: 24px;
       border: none;
       background: none;
       color: var(--muted);
@@ -510,8 +639,15 @@
       opacity: 0;
       transition: opacity 0.15s, color 0.15s, background 0.15s;
     }
-    .folder-header:hover .folder-del { opacity: 1; }
-    .folder-del:hover { color: var(--rust2); background: var(--b2); }
+
+    .folder-header:hover .folder-del {
+      opacity: 1;
+    }
+
+    .folder-del:hover {
+      color: var(--rust2);
+      background: var(--b2);
+    }
 
     /* ── Folder body / collapse animation ────────────────────────── */
     .folder-body {
@@ -519,7 +655,10 @@
       max-height: 4000px;
       transition: max-height 0.25s ease;
     }
-    .folder-card.collapsed .folder-body { max-height: 0; }
+
+    .folder-card.collapsed .folder-body {
+      max-height: 0;
+    }
 
     /* ── Link column header ───────────────────────────────────────── */
     .link-col-hdr {
@@ -530,6 +669,7 @@
       border-bottom: 1px solid var(--b1);
       background: var(--card2);
     }
+
     .link-col-hdr span {
       padding: 0 4px;
       font-family: 'DM Mono', monospace;
@@ -550,9 +690,18 @@
       border-bottom: 1px solid var(--faint);
       transition: background 0.15s;
     }
-    .link-rows-wrap .link-row:last-child { border-bottom: none; }
-    .link-row:hover { background: var(--card2); }
-    .link-row.link-drag-over { box-shadow: 0 -2px 0 var(--rust); }
+
+    .link-rows-wrap .link-row:last-child {
+      border-bottom: none;
+    }
+
+    .link-row:hover {
+      background: var(--card2);
+    }
+
+    .link-row.link-drag-over {
+      box-shadow: 0 -2px 0 var(--rust);
+    }
 
     /* ── Link drag handle ─────────────────────────────────────────── */
     .link-drag-hdl {
@@ -565,8 +714,14 @@
       opacity: 0;
       transition: opacity 0.15s;
     }
-    .link-row:hover .link-drag-hdl { opacity: 1; }
-    .link-drag-hdl:active { cursor: grabbing; }
+
+    .link-row:hover .link-drag-hdl {
+      opacity: 1;
+    }
+
+    .link-drag-hdl:active {
+      cursor: grabbing;
+    }
 
     /* ── Link cell (display) ──────────────────────────────────────── */
     .link-cell {
@@ -575,6 +730,7 @@
       overflow: hidden;
       cursor: text;
     }
+
     .lc-inner {
       font-family: 'DM Sans', sans-serif;
       font-size: 13px;
@@ -583,9 +739,20 @@
       overflow: hidden;
       text-overflow: ellipsis;
     }
-    .lc-inner.ph { color: var(--muted); font-style: italic; }
-    .lc-inner a  { color: var(--blue); text-decoration: none; }
-    .lc-inner a:hover { text-decoration: underline; }
+
+    .lc-inner.ph {
+      color: var(--muted);
+      font-style: italic;
+    }
+
+    .lc-inner a {
+      color: var(--blue);
+      text-decoration: none;
+    }
+
+    .lc-inner a:hover {
+      text-decoration: underline;
+    }
 
     /* ── Link cell (edit) ─────────────────────────────────────────── */
     .link-cell-inp {
@@ -607,11 +774,13 @@
       justify-content: flex-end;
       gap: 2px;
     }
+
     .lac {
       display: flex;
       align-items: center;
       justify-content: center;
-      width: 24px; height: 24px;
+      width: 24px;
+      height: 24px;
       border: none;
       background: none;
       color: var(--muted);
@@ -620,11 +789,30 @@
       opacity: 0;
       transition: opacity 0.15s, color 0.15s, background 0.15s;
     }
-    .link-row:hover .lac { opacity: 1; }
-    .lac:hover           { color: var(--white); background: var(--b2); }
-    .lac.copy-done       { color: var(--green); opacity: 1 !important; }
-    .lac.lac-disabled    { opacity: 0.18 !important; cursor: not-allowed; pointer-events: none; }
-    .lac.lac-del:hover   { color: var(--rust2); }
+
+    .link-row:hover .lac {
+      opacity: 1;
+    }
+
+    .lac:hover {
+      color: var(--white);
+      background: var(--b2);
+    }
+
+    .lac.copy-done {
+      color: var(--green);
+      opacity: 1 !important;
+    }
+
+    .lac.lac-disabled {
+      opacity: 0.18 !important;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+
+    .lac.lac-del:hover {
+      color: var(--rust2);
+    }
 
     /* ── Empty folder state ───────────────────────────────────────── */
     .folder-empty {
@@ -641,6 +829,7 @@
       padding: 6px 12px 8px;
       border-top: 1px solid var(--faint);
     }
+
     .btn-add-link {
       display: inline-flex;
       align-items: center;
@@ -656,7 +845,10 @@
       border-radius: 4px;
       transition: color 0.15s;
     }
-    .btn-add-link:hover { color: var(--rust2); }
+
+    .btn-add-link:hover {
+      color: var(--rust2);
+    }
 
     /* ══════════════════════════════════════════════════════════════════
        PHASE 3 — SEARCH
@@ -676,7 +868,12 @@
       outline: none;
       transition: border-color 0.15s, background 0.15s;
     }
-    #search-input::placeholder { color: var(--muted); font-style: italic; }
+
+    #search-input::placeholder {
+      color: var(--muted);
+      font-style: italic;
+    }
+
     #search-input:focus {
       border-color: var(--rust);
       background: var(--card2);
@@ -696,9 +893,12 @@
       background: var(--card);
       border: 1px solid var(--b2);
       border-radius: 8px;
-      box-shadow: 0 8px 24px rgba(0,0,0,.50);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, .50);
     }
-    #search-dropdown.open { display: block; }
+
+    #search-dropdown.open {
+      display: block;
+    }
 
     /* ── Individual result row ────────────────────────────────────── */
     .search-result {
@@ -710,8 +910,14 @@
       border-bottom: 1px solid var(--b1);
       transition: background 0.15s;
     }
-    .search-result:last-child { border-bottom: none; }
-    .search-result:hover { background: var(--b1); }
+
+    .search-result:last-child {
+      border-bottom: none;
+    }
+
+    .search-result:hover {
+      background: var(--b1);
+    }
 
     .sr-name {
       font-family: 'DM Sans', sans-serif;
@@ -721,8 +927,12 @@
       overflow: hidden;
       text-overflow: ellipsis;
     }
+
     /* Placeholder name when link has no name field */
-    .sr-name.sr-unnamed { color: var(--muted); font-style: italic; }
+    .sr-name.sr-unnamed {
+      color: var(--muted);
+      font-style: italic;
+    }
 
     .sr-meta {
       font-family: 'DM Mono', monospace;
@@ -745,10 +955,19 @@
 
     /* ── Link row highlight — fires when navigating to a search result */
     @keyframes link-highlight {
-      0%   { background-color: rgba(183,65,14,.30); }
-      70%  { background-color: rgba(183,65,14,.14); }
-      100% { background-color: transparent; }
+      0% {
+        background-color: rgba(183, 65, 14, .30);
+      }
+
+      70% {
+        background-color: rgba(183, 65, 14, .14);
+      }
+
+      100% {
+        background-color: transparent;
+      }
     }
+
     .link-row.search-highlight {
       animation: link-highlight 1.6s ease-out;
     }
@@ -759,23 +978,106 @@
 
     /* ── Top-action icon buttons (Export · Import · Theme toggle) ─── */
     .tap-btn {
-      display:         flex;
-      align-items:     center;
+      display: flex;
+      align-items: center;
       justify-content: center;
-      width:           30px;
-      height:          30px;
-      border:          1px solid var(--b2);
-      background:      var(--card);
-      color:           var(--dim);
-      border-radius:   6px;
-      cursor:          pointer;
-      flex-shrink:     0;
+      width: 30px;
+      height: 30px;
+      border: 1px solid var(--b2);
+      background: var(--card);
+      color: var(--dim);
+      border-radius: 6px;
+      cursor: pointer;
+      flex-shrink: 0;
       transition: color 0.15s, background 0.15s, border-color 0.15s;
     }
+
     .tap-btn:hover {
-      color:         var(--white);
-      background:    var(--b1);
-      border-color:  var(--rust);
+      color: var(--white);
+      background: var(--b1);
+      border-color: var(--rust);
+    }
+
+    /* ══════════════════════════════════════════════════════════════════
+       PHASE 5 — POLISH + RESPONSIVE
+    ══════════════════════════════════════════════════════════════════ */
+
+    /* ── Micro-interaction: main area fades in on sheet switch ────── */
+    @keyframes area-fade-in {
+      from {
+        opacity: 0;
+      }
+
+      to {
+        opacity: 1;
+      }
+    }
+
+    #main-area.sheet-switch {
+      animation: area-fade-in 0.15s ease;
+    }
+
+    /* ── Micro-interaction: search dropdown slides in on open ─────── */
+    /* Adds a brief translate + opacity entrance. The keyframe is layered
+       on top of the existing display:block toggle so no JS change needed. */
+    @keyframes dd-open {
+      from {
+        opacity: 0;
+        transform: translateY(-4px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    #search-dropdown.open {
+      animation: dd-open 0.12s ease;
+    }
+
+    /* ── Responsive: mobile layout at ≤ 540px ────────────────────── */
+    @media (max-width: 540px) {
+
+      /* Tighter top-bar horizontal padding and gap */
+      #top-bar {
+        padding: 0 12px;
+        gap: 8px;
+      }
+
+      /* Tighter content area; preserve room for the pinned Add Folder bar */
+      #main-area {
+        padding: 16px 12px 72px;
+      }
+
+      /* Folder add bar: tighter on narrow screens */
+      #folder-add-bar {
+        padding: 12px 12px 8px;
+      }
+
+      /* Link table: hide the Description column so name + URL still
+         breathe at 375px. The column is removed from the grid as well
+         so the remaining columns absorb the freed space.             */
+      .link-col-hdr span:nth-child(4),
+      .link-cell[data-field="description"] {
+        display: none;
+      }
+
+      /* 4-column grid: drag-handle | name | url | actions */
+      .link-row,
+      .link-col-hdr {
+        grid-template-columns: 22px 35fr 50fr 52px;
+      }
+
+      /* Trim folder name font so long names don't clip awkwardly */
+      .folder-name {
+        font-size: 12px;
+      }
+
+      /* Dialog box: honour safe-area insets so it clears notch/home-bar */
+      .dlg-box {
+        margin: env(safe-area-inset-top, 0px) 0;
+      }
     }
   </style>
 </head>
@@ -789,8 +1091,8 @@
     </div>
     <!-- Phase 3: global search -->
     <div id="search-wrap">
-      <input id="search-input" type="text" placeholder="Search…"
-             autocomplete="off" spellcheck="false" aria-label="Search links">
+      <input id="search-input" type="text" placeholder="Search…" autocomplete="off" spellcheck="false"
+        aria-label="Search links">
       <div id="search-dropdown" role="listbox" aria-label="Search results"></div>
     </div>
     <!-- Phase 4: import / export / theme toggle -->
@@ -803,12 +1105,12 @@
   <!-- ══ ADD FOLDER BAR (pinned above tab bar) ══════════════════════ -->
   <div id="folder-add-bar">
     <button id="btn-add-folder">
-      <svg width="14" height="14" viewBox="0 0 16 16" fill="none"
-           stroke="currentColor" stroke-width="1.8"
-           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <path d="M1 4.5A1.5 1.5 0 0 1 2.5 3H6l2 2h5.5A1.5 1.5 0 0 1 15 6.5V12A1.5 1.5 0 0 1 13.5 13.5h-11A1.5 1.5 0 0 1 1 12Z"/>
-        <line x1="8" y1="7.5" x2="8" y2="11.5"/>
-        <line x1="6" y1="9.5" x2="10" y2="9.5"/>
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"
+        stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path
+          d="M1 4.5A1.5 1.5 0 0 1 2.5 3H6l2 2h5.5A1.5 1.5 0 0 1 15 6.5V12A1.5 1.5 0 0 1 13.5 13.5h-11A1.5 1.5 0 0 1 1 12Z" />
+        <line x1="8" y1="7.5" x2="8" y2="11.5" />
+        <line x1="6" y1="9.5" x2="10" y2="9.5" />
       </svg>
       + Add Folder
     </button>
@@ -829,7 +1131,7 @@
     const LS_KEY = 'urlmanager_v1';
 
     // ── App state (mutated in-place; persisted on every write) ─────────
-    let state  = null;
+    let state = null;
     let dragId = null;   // ID of the sheet-tab currently being dragged
 
 
@@ -850,7 +1152,7 @@
 
     /** Return today as ISO date string: "2026-10-08" */
     function isoToday() {
-      const d  = new Date();
+      const d = new Date();
       const yy = d.getFullYear();
       const mm = String(d.getMonth() + 1).padStart(2, '0');
       const dd = String(d.getDate()).padStart(2, '0');
@@ -864,15 +1166,15 @@
     function fmtDate(iso) {
       if (!iso) return '—';
       const [y, m, d] = iso.split('-');
-      const MON = ['Jan','Feb','Mar','Apr','May','Jun',
-                   'Jul','Aug','Sep','Oct','Nov','Dec'];
+      const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
       return `${d} ${MON[+m - 1] ?? ''} ${y}`;
     }
 
     /** Escape HTML special chars for safe innerHTML insertion */
     function esc(s) {
       return String(s ?? '').replace(/[&<>"']/g, c =>
-        ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":"&#39;" }[c])
+        ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": "&#39;" }[c])
       );
     }
 
@@ -903,14 +1205,14 @@
     function newState() {
       const id = uid('sheet');
       return {
-        version:  '1.0',
+        version: '1.0',
         settings: { theme: 'dark', activeSheetId: id },
         sheets: [{
           id,
-          name:         'My Links',
+          name: 'My Links',
           lastEditDate: isoToday(),
-          order:        0,
-          folders:      []
+          order: 0,
+          folders: []
         }]
       };
     }
@@ -941,21 +1243,23 @@
     ────────────────────────────────────────────────────────────────── */
 
     function activateSheet(id) {
+      _switchingSheet = true;   // Phase 5: signal renderMain to play the fade
       state.settings.activeSheetId = id;
       persist();
       renderAll();
+      _switchingSheet = false;
     }
 
     function addSheet(name) {
       name = name.trim();
       if (!name) return;
       const maxOrd = state.sheets.reduce((m, s) => Math.max(m, s.order), -1);
-      const sheet  = {
-        id:           uid('sheet'),
+      const sheet = {
+        id: uid('sheet'),
         name,
         lastEditDate: isoToday(),
-        order:        maxOrd + 1,
-        folders:      []
+        order: maxOrd + 1,
+        folders: []
       };
       state.sheets.push(sheet);
       state.settings.activeSheetId = sheet.id;
@@ -978,7 +1282,7 @@
       const idx = state.sheets.findIndex(s => s.id === id);
       if (idx < 0) return;
 
-      const sh  = state.sheets[idx];
+      const sh = state.sheets[idx];
       const msg = sh.folders.length
         ? `"${esc(sh.name)}" contains folders and links. Delete everything?`
         : `Delete the sheet "${esc(sh.name)}"?`;
@@ -1018,7 +1322,7 @@
       const okClass = opts.okClass ?? 'btn-danger';
       const el = document.createElement('div');
       el.className = 'dlg-overlay';
-      el.tabIndex  = -1;
+      el.tabIndex = -1;
       el.innerHTML = `
         <div class="dlg-box" role="dialog" aria-modal="true">
           <div class="dlg-title">${title}</div>
@@ -1033,8 +1337,8 @@
 
       const close = () => el.remove();
       el.querySelector('[data-r="cancel"]').onclick = close;
-      el.querySelector('[data-r="ok"]').onclick     = () => { close(); onOk(); };
-      el.addEventListener('click',   e => { if (e.target === el) close(); });
+      el.querySelector('[data-r="ok"]').onclick = () => { close(); onOk(); };
+      el.addEventListener('click', e => { if (e.target === el) close(); });
       el.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
     }
 
@@ -1055,7 +1359,7 @@
       e.dataTransfer.dropEffect = 'move';
       // Clear previous indicator, set on current target only
       document.querySelectorAll('.sheet-tab.drag-over')
-               .forEach(t => t.classList.remove('drag-over'));
+        .forEach(t => t.classList.remove('drag-over'));
       if (e.currentTarget.dataset.id !== dragId)
         e.currentTarget.classList.add('drag-over');
     }
@@ -1083,7 +1387,7 @@
 
     function onDragEnd() {
       document.querySelectorAll('.sheet-tab')
-               .forEach(t => t.classList.remove('dragging', 'drag-over'));
+        .forEach(t => t.classList.remove('dragging', 'drag-over'));
       dragId = null;
     }
 
@@ -1169,11 +1473,11 @@
       if (!sh) return;
       const maxOrd = sh.folders.reduce((m, f) => Math.max(m, f.order), -1);
       const fo = {
-        id:        uid('folder'),
-        name:      'New Folder',
+        id: uid('folder'),
+        name: 'New Folder',
         collapsed: false,
-        order:     maxOrd + 1,
-        links:     []
+        order: maxOrd + 1,
+        links: []
       };
       sh.folders.push(fo);
       touch(sh.id);
@@ -1233,9 +1537,9 @@
     function startFolderRename(card, sheetId, folderId, nmEl) {
       if (card.querySelector('.folder-rename-inp')) return;
       const inp = document.createElement('input');
-      inp.type      = 'text';
+      inp.type = 'text';
       inp.className = 'folder-rename-inp';
-      inp.value     = nmEl.textContent;
+      inp.value = nmEl.textContent;
       nmEl.replaceWith(inp);
       inp.focus();
       inp.select();
@@ -1253,7 +1557,7 @@
       };
       inp.addEventListener('blur', commit);
       inp.addEventListener('keydown', e => {
-        if (e.key === 'Enter')  { e.preventDefault(); commit(); }
+        if (e.key === 'Enter') { e.preventDefault(); commit(); }
         if (e.key === 'Escape') { e.preventDefault(); cancel(); }
       });
     }
@@ -1291,7 +1595,7 @@
       touch(sheetId);
       persist();
       // Patch the single cell in the DOM instead of full re-render
-      const row  = document.querySelector(`.link-row[data-lid="${linkId}"]`);
+      const row = document.querySelector(`.link-row[data-lid="${linkId}"]`);
       const cell = row && row.querySelector(`.link-cell[data-field="${field}"]`);
       if (cell) renderCellDisplay(cell, field, value);
       // If URL changed, sync the copy button's disabled state
@@ -1332,18 +1636,18 @@
       const inner = document.createElement('div');
       inner.className = 'lc-inner' + (value ? '' : ' ph');
       if (field === 'url' && value) {
-        const a       = document.createElement('a');
-        a.href        = value;
-        a.target      = '_blank';
-        a.rel         = 'noopener noreferrer';
+        const a = document.createElement('a');
+        a.href = value;
+        a.target = '_blank';
+        a.rel = 'noopener noreferrer';
         a.textContent = value;
         // Clicking the link should not trigger cell edit
         a.addEventListener('click', e => e.stopPropagation());
         inner.appendChild(a);
       } else {
         inner.textContent = value || (field === 'name' ? 'Name…'
-                          : field === 'url'  ? 'https://…'
-                          :                    'Description…');
+          : field === 'url' ? 'https://…'
+            : 'Description…');
       }
       cell.appendChild(inner);
     }
@@ -1352,16 +1656,16 @@
     function startCellEdit(cell, sheetId, folderId, linkId, field) {
       if (cell.querySelector('.link-cell-inp')) return;  // already editing
       const sh = state.sheets.find(s => s.id === sheetId);
-      const fo = sh  && sh.folders.find(f => f.id === folderId);
-      const lk = fo  && fo.links.find(l => l.id === linkId);
+      const fo = sh && sh.folders.find(f => f.id === folderId);
+      const lk = fo && fo.links.find(l => l.id === linkId);
       if (!lk) return;
 
       const original = lk[field] || '';
       cell.innerHTML = '';
       const inp = document.createElement('input');
-      inp.type      = 'text';
+      inp.type = 'text';
       inp.className = 'link-cell-inp';
-      inp.value     = original;
+      inp.value = original;
       cell.appendChild(inp);
       inp.focus();
       inp.select();
@@ -1377,7 +1681,7 @@
       };
       inp.addEventListener('blur', commit);
       inp.addEventListener('keydown', e => {
-        if (e.key === 'Enter')  { e.preventDefault(); inp.blur(); }
+        if (e.key === 'Enter') { e.preventDefault(); inp.blur(); }
         if (e.key === 'Escape') { e.preventDefault(); inp.removeEventListener('blur', commit); cancel(); }
       });
     }
@@ -1403,7 +1707,7 @@
         ta.style.cssText = 'position:fixed;opacity:0;top:0;left:0';
         document.body.appendChild(ta);
         ta.select();
-        try { document.execCommand('copy'); } catch(e) {}
+        try { document.execCommand('copy'); } catch (e) { }
         ta.remove();
       };
       if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -1423,7 +1727,7 @@
     let folderDragSheetId = null;
 
     function onFolderDragStart(e, sheetId, folderId) {
-      folderDragId      = folderId;
+      folderDragId = folderId;
       folderDragSheetId = sheetId;
       e.dataTransfer.effectAllowed = 'move';
       e.dataTransfer.setData('text/plain', folderId);
@@ -1435,20 +1739,20 @@
       e.preventDefault();
       e.dataTransfer.dropEffect = 'move';
       document.querySelectorAll('.folder-card')
-               .forEach(c => c.classList.remove('folder-drag-over'));
+        .forEach(c => c.classList.remove('folder-drag-over'));
       card.classList.add('folder-drag-over');
     }
 
     function onFolderDrop(e, sheetId, targetFolderId) {
       e.preventDefault();
       document.querySelectorAll('.folder-card')
-               .forEach(c => c.classList.remove('folder-drag-over'));
+        .forEach(c => c.classList.remove('folder-drag-over'));
       if (!folderDragId || folderDragId === targetFolderId || folderDragSheetId !== sheetId) return;
-      const sh  = state.sheets.find(s => s.id === sheetId);
+      const sh = state.sheets.find(s => s.id === sheetId);
       if (!sh) return;
       const sorted = [...sh.folders].sort((a, b) => a.order - b.order);
-      const si     = sorted.findIndex(f => f.id === folderDragId);
-      const ti     = sorted.findIndex(f => f.id === targetFolderId);
+      const si = sorted.findIndex(f => f.id === folderDragId);
+      const ti = sorted.findIndex(f => f.id === targetFolderId);
       if (si < 0 || ti < 0) return;
       const [moved] = sorted.splice(si, 1);
       sorted.splice(ti, 0, moved);
@@ -1460,7 +1764,7 @@
 
     function onFolderDragEnd() {
       document.querySelectorAll('.folder-card')
-               .forEach(c => c.classList.remove('folder-drag-over'));
+        .forEach(c => c.classList.remove('folder-drag-over'));
       folderDragId = null;
     }
 
@@ -1469,13 +1773,14 @@
        PHASE 2 — DRAG-TO-REORDER: LINKS
     ══════════════════════════════════════════════════════════════════ */
 
-    let linkDragId       = null;
+    let linkDragId = null;
     let linkDragFolderId = null;
 
     let searchTimer = null;    // Phase 3: debounce handle for search input
+    let _switchingSheet = false; // Phase 5: true only during activateSheet(), triggers fade animation
 
     function onLinkDragStart(e, folderId, linkId) {
-      linkDragId       = linkId;
+      linkDragId = linkId;
       linkDragFolderId = folderId;
       e.dataTransfer.effectAllowed = 'move';
       e.dataTransfer.setData('text/plain', linkId);
@@ -1487,21 +1792,21 @@
       e.preventDefault();
       e.dataTransfer.dropEffect = 'move';
       document.querySelectorAll('.link-row')
-               .forEach(r => r.classList.remove('link-drag-over'));
+        .forEach(r => r.classList.remove('link-drag-over'));
       row.classList.add('link-drag-over');
     }
 
     function onLinkDrop(e, sheetId, folderId, targetLinkId) {
       e.preventDefault();
       document.querySelectorAll('.link-row')
-               .forEach(r => r.classList.remove('link-drag-over'));
+        .forEach(r => r.classList.remove('link-drag-over'));
       if (!linkDragId || linkDragId === targetLinkId || linkDragFolderId !== folderId) return;
-      const sh  = state.sheets.find(s => s.id === sheetId);
-      const fo  = sh && sh.folders.find(f => f.id === folderId);
+      const sh = state.sheets.find(s => s.id === sheetId);
+      const fo = sh && sh.folders.find(f => f.id === folderId);
       if (!fo) return;
       const sorted = [...fo.links].sort((a, b) => a.order - b.order);
-      const si     = sorted.findIndex(l => l.id === linkDragId);
-      const ti     = sorted.findIndex(l => l.id === targetLinkId);
+      const si = sorted.findIndex(l => l.id === linkDragId);
+      const ti = sorted.findIndex(l => l.id === targetLinkId);
       if (si < 0 || ti < 0) return;
       const [moved] = sorted.splice(si, 1);
       sorted.splice(ti, 0, moved);
@@ -1513,7 +1818,7 @@
 
     function onLinkDragEnd() {
       document.querySelectorAll('.link-row')
-               .forEach(r => r.classList.remove('link-drag-over'));
+        .forEach(r => r.classList.remove('link-drag-over'));
       linkDragId = null;
     }
 
@@ -1523,45 +1828,45 @@
     ══════════════════════════════════════════════════════════════════ */
 
     function buildLinkRow(sheetId, folderId, lk) {
-      const row       = document.createElement('div');
-      row.className   = 'link-row';
+      const row = document.createElement('div');
+      row.className = 'link-row';
       row.dataset.lid = lk.id;
-      row.draggable   = false;
+      row.draggable = false;
 
       // ── Drag handle
-      const dh     = document.createElement('div');
+      const dh = document.createElement('div');
       dh.className = 'link-drag-hdl';
       dh.innerHTML = SVG_DOTS;
-      dh.title     = 'Drag to reorder';
+      dh.title = 'Drag to reorder';
       dh.addEventListener('mousedown', () => { row.draggable = true; });
-      dh.addEventListener('mouseup',   () => { row.draggable = false; });
+      dh.addEventListener('mouseup', () => { row.draggable = false; });
 
       // ── Name cell
-      const nmCell            = document.createElement('div');
-      nmCell.className        = 'link-cell';
-      nmCell.dataset.field    = 'name';
+      const nmCell = document.createElement('div');
+      nmCell.className = 'link-cell';
+      nmCell.dataset.field = 'name';
       renderCellDisplay(nmCell, 'name', lk.name);
 
       // ── URL cell
-      const urlCell           = document.createElement('div');
-      urlCell.className       = 'link-cell';
-      urlCell.dataset.field   = 'url';
+      const urlCell = document.createElement('div');
+      urlCell.className = 'link-cell';
+      urlCell.dataset.field = 'url';
       renderCellDisplay(urlCell, 'url', lk.url);
 
       // ── Description cell
-      const descCell          = document.createElement('div');
-      descCell.className      = 'link-cell';
-      descCell.dataset.field  = 'description';
+      const descCell = document.createElement('div');
+      descCell.className = 'link-cell';
+      descCell.dataset.field = 'description';
       renderCellDisplay(descCell, 'description', lk.description);
 
       // ── Actions column
-      const actions       = document.createElement('div');
-      actions.className   = 'link-actions';
+      const actions = document.createElement('div');
+      actions.className = 'link-actions';
 
-      const copyBtn       = document.createElement('button');
-      copyBtn.className   = 'lac lac-copy' + (lk.url ? '' : ' lac-disabled');
-      copyBtn.title       = lk.url ? 'Copy URL' : 'No URL to copy';
-      copyBtn.innerHTML   = SVG_COPY;
+      const copyBtn = document.createElement('button');
+      copyBtn.className = 'lac lac-copy' + (lk.url ? '' : ' lac-disabled');
+      copyBtn.title = lk.url ? 'Copy URL' : 'No URL to copy';
+      copyBtn.innerHTML = SVG_COPY;
       copyBtn.addEventListener('click', e => {
         e.stopPropagation();
         // Re-read from live state so we get latest URL even if edited after row was built
@@ -1572,10 +1877,10 @@
         copyToClipboard(lk2.url, copyBtn);
       });
 
-      const delBtn        = document.createElement('button');
-      delBtn.className    = 'lac lac-del';
-      delBtn.title        = 'Delete link';
-      delBtn.innerHTML    = SVG_TRASH;
+      const delBtn = document.createElement('button');
+      delBtn.className = 'lac lac-del';
+      delBtn.title = 'Delete link';
+      delBtn.innerHTML = SVG_TRASH;
       delBtn.addEventListener('click', e => {
         e.stopPropagation();
         deleteLink(sheetId, folderId, lk.id);
@@ -1593,9 +1898,9 @@
 
       // ── Drag-to-reorder wiring
       row.addEventListener('dragstart', e => onLinkDragStart(e, folderId, lk.id));
-      row.addEventListener('dragover',  e => onLinkDragOver(e, row, folderId));
-      row.addEventListener('drop',      e => onLinkDrop(e, sheetId, folderId, lk.id));
-      row.addEventListener('dragend',   onLinkDragEnd);
+      row.addEventListener('dragover', e => onLinkDragOver(e, row, folderId));
+      row.addEventListener('drop', e => onLinkDrop(e, sheetId, folderId, lk.id));
+      row.addEventListener('dragend', onLinkDragEnd);
 
       row.append(dh, nmCell, urlCell, descCell, actions);
       return row;
@@ -1619,18 +1924,18 @@
         sheet.folders.forEach(folder => {
           folder.links.forEach(link => {
             const hit =
-              (link.name        && link.name.toLowerCase().includes(q))        ||
-              (link.url         && link.url.toLowerCase().includes(q))         ||
+              (link.name && link.name.toLowerCase().includes(q)) ||
+              (link.url && link.url.toLowerCase().includes(q)) ||
               (link.description && link.description.toLowerCase().includes(q));
             if (hit) {
               results.push({
-                sheetId:    sheet.id,
-                sheetName:  sheet.name,
-                folderId:   folder.id,
+                sheetId: sheet.id,
+                sheetName: sheet.name,
+                folderId: folder.id,
                 folderName: folder.name,
-                linkId:     link.id,
-                linkName:   link.name,   // may be empty string
-                linkUrl:    link.url,
+                linkId: link.id,
+                linkName: link.name,   // may be empty string
+                linkUrl: link.url,
               });
             }
           });
@@ -1645,25 +1950,25 @@
       dd.innerHTML = '';
 
       if (!results.length) {
-        const empty     = document.createElement('div');
+        const empty = document.createElement('div');
         empty.className = 'search-empty';
         // PRD exact copy: No results for "[query]"
         empty.textContent = `No results for "${query}"`;
         dd.appendChild(empty);
       } else {
         results.forEach(r => {
-          const item     = document.createElement('div');
+          const item = document.createElement('div');
           item.className = 'search-result';
           item.setAttribute('role', 'option');
 
           // Link name — fall back to URL, then "(unnamed)" if both empty
-          const nameEl     = document.createElement('div');
-          const display    = r.linkName || r.linkUrl;
+          const nameEl = document.createElement('div');
+          const display = r.linkName || r.linkUrl;
           nameEl.className = 'sr-name' + (display ? '' : ' sr-unnamed');
           nameEl.textContent = display || '(unnamed link)';
 
           // Sheet / Folder breadcrumb
-          const metaEl     = document.createElement('div');
+          const metaEl = document.createElement('div');
           metaEl.className = 'sr-meta';
           metaEl.textContent = `${r.sheetName} / ${r.folderName}`;
 
@@ -1688,9 +1993,9 @@
      */
     function closeSearch() {
       const inp = document.getElementById('search-input');
-      const dd  = document.getElementById('search-dropdown');
+      const dd = document.getElementById('search-dropdown');
       if (inp) inp.value = '';
-      if (dd)  dd.classList.remove('open');
+      if (dd) dd.classList.remove('open');
     }
 
     /**
@@ -1751,12 +2056,12 @@
     ────────────────────────────────────────────────────────────────── */
     function exportData() {
       const filename = `url-manager-${isoToday()}.json`;
-      const payload  = JSON.stringify(state, null, 2);
-      const blob     = new Blob([payload], { type: 'application/json' });
-      const url      = URL.createObjectURL(blob);
-      const a        = document.createElement('a');
-      a.href         = url;
-      a.download     = filename;
+      const payload = JSON.stringify(state, null, 2);
+      const blob = new Blob([payload], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
       a.style.cssText = 'display:none;position:fixed;';
       document.body.appendChild(a);
       a.click();
@@ -1771,9 +2076,9 @@
        confirm.  Invalid files show an error and leave state untouched.
     ────────────────────────────────────────────────────────────────── */
     function importData() {
-      const input     = document.createElement('input');
-      input.type      = 'file';
-      input.accept    = '.json';
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = '.json';
       input.style.cssText = 'display:none;position:fixed;';
       document.body.appendChild(input);
 
@@ -1799,9 +2104,9 @@
 
           // ── Step 2: Shape validation ───────────────────────────
           if (
-            !parsed                         ||
-            typeof parsed !== 'object'      ||
-            !parsed.version                 ||
+            !parsed ||
+            typeof parsed !== 'object' ||
+            !parsed.version ||
             !Array.isArray(parsed.sheets)
           ) {
             showImportError(
@@ -1829,20 +2134,31 @@
               // Phase 2 migration: add any missing fields so the app
               // won't crash on older or partially-formed backup files
               state.sheets.forEach((sh, si) => {
-                if (typeof sh.order       === 'undefined') sh.order   = si;
+                if (typeof sh.order === 'undefined') sh.order = si;
                 if (!Array.isArray(sh.folders)) sh.folders = [];
                 sh.folders.forEach((fo, fi) => {
-                  if (typeof fo.collapsed !== 'boolean')  fo.collapsed = false;
-                  if (typeof fo.order     === 'undefined') fo.order    = fi;
+                  if (typeof fo.collapsed !== 'boolean') fo.collapsed = false;
+                  if (typeof fo.order === 'undefined') fo.order = fi;
                   if (!Array.isArray(fo.links)) fo.links = [];
                   fo.links.forEach((lk, li) => {
-                    if (typeof lk.name        === 'undefined') lk.name        = '';
-                    if (typeof lk.url         === 'undefined') lk.url         = '';
+                    if (typeof lk.name === 'undefined') lk.name = '';
+                    if (typeof lk.url === 'undefined') lk.url = '';
                     if (typeof lk.description === 'undefined') lk.description = '';
-                    if (typeof lk.order       === 'undefined') lk.order       = li;
+                    if (typeof lk.order === 'undefined') lk.order = li;
                   });
                 });
               });
+
+              // Phase 5 edge case: imported file contained zero sheets → seed a default
+              // so the app is never left in an empty / broken state.
+              if (!state.sheets.length) {
+                const nid = uid('sheet');
+                state.sheets.push({
+                  id: nid, name: 'My Links',
+                  lastEditDate: isoToday(), order: 0, folders: []
+                });
+                state.settings.activeSheetId = nid;
+              }
 
               // Validate activeSheetId still points to a real sheet
               if (!state.sheets.find(s => s.id === state.settings.activeSheetId)) {
@@ -1857,7 +2173,7 @@
               const themeBtn = document.getElementById('btn-theme');
               if (themeBtn) {
                 themeBtn.innerHTML = nowLight ? SVG_MOON : SVG_SUN;
-                themeBtn.title     = nowLight
+                themeBtn.title = nowLight
                   ? 'Switch to dark mode'
                   : 'Switch to light mode';
               }
@@ -1887,7 +2203,7 @@
     function showImportError(msg) {
       const el = document.createElement('div');
       el.className = 'dlg-overlay';
-      el.tabIndex  = -1;
+      el.tabIndex = -1;
       el.innerHTML = `
         <div class="dlg-box" role="alertdialog" aria-modal="true">
           <div class="dlg-title">Import Error</div>
@@ -1900,7 +2216,7 @@
       el.focus();
       const close = () => el.remove();
       el.querySelector('[data-r="ok"]').onclick = close;
-      el.addEventListener('click',   e => { if (e.target === el) close(); });
+      el.addEventListener('click', e => { if (e.target === el) close(); });
       el.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
     }
 
@@ -1918,7 +2234,7 @@
       const btn = document.getElementById('btn-theme');
       if (!btn) return;
       btn.innerHTML = isNowLight ? SVG_MOON : SVG_SUN;
-      btn.title     = isNowLight ? 'Switch to dark mode' : 'Switch to light mode';
+      btn.title = isNowLight ? 'Switch to dark mode' : 'Switch to light mode';
     }
 
 
@@ -1931,32 +2247,44 @@
       bar.innerHTML = '';
 
       // Export button
-      const expBtn       = document.createElement('button');
-      expBtn.id          = 'btn-export';
-      expBtn.className   = 'tap-btn';
-      expBtn.title       = 'Export data as JSON';
-      expBtn.innerHTML   = SVG_EXPORT;
+      const expBtn = document.createElement('button');
+      expBtn.id = 'btn-export';
+      expBtn.className = 'tap-btn';
+      expBtn.title = 'Export data as JSON';
+      expBtn.innerHTML = SVG_EXPORT;
       expBtn.addEventListener('click', exportData);
 
       // Import button
-      const impBtn       = document.createElement('button');
-      impBtn.id          = 'btn-import';
-      impBtn.className   = 'tap-btn';
-      impBtn.title       = 'Import data from JSON';
-      impBtn.innerHTML   = SVG_IMPORT;
+      const impBtn = document.createElement('button');
+      impBtn.id = 'btn-import';
+      impBtn.className = 'tap-btn';
+      impBtn.title = 'Import data from JSON';
+      impBtn.innerHTML = SVG_IMPORT;
       impBtn.addEventListener('click', importData);
 
       // Theme toggle — icon reflects current theme at init time
-      const themeBtn     = document.createElement('button');
-      themeBtn.id        = 'btn-theme';
+      const themeBtn = document.createElement('button');
+      themeBtn.id = 'btn-theme';
       themeBtn.className = 'tap-btn';
-      const startsLight  = document.body.classList.contains('light');
+      const startsLight = document.body.classList.contains('light');
       themeBtn.innerHTML = startsLight ? SVG_MOON : SVG_SUN;
-      themeBtn.title     = startsLight ? 'Switch to dark mode' : 'Switch to light mode';
+      themeBtn.title = startsLight ? 'Switch to dark mode' : 'Switch to light mode';
       themeBtn.addEventListener('click', toggleTheme);
 
       bar.append(expBtn, impBtn, themeBtn);
     }
+
+
+    /* ══════════════════════════════════════════════════════════════════
+       PHASE 5 — POLISH
+       _switchingSheet flag declared above (near searchTimer).
+       CSS animations and responsive breakpoints are in the <style> block.
+       Edge cases:
+         · Delete last sheet → auto-creates "My Links" (deleteSheet, Phase 1)
+         · Import corrupted JSON → showImportError, state untouched (Phase 4)
+         · Import file with zero sheets → seeds "My Links" (importData, above)
+         · Copy button with empty URL → lac-disabled, pointer-events:none (Phase 2)
+    ══════════════════════════════════════════════════════════════════ */
 
 
     /* ──────────────────────────────────────────────────────────────────
@@ -1964,7 +2292,17 @@
     ────────────────────────────────────────────────────────────────── */
 
     function renderMain() {
-      const area  = document.getElementById('main-area');
+      const area = document.getElementById('main-area');
+
+      // Phase 5: Micro-animation — fade the content in on explicit sheet switch.
+      // _switchingSheet is only true when called from activateSheet(), not on
+      // routine re-renders triggered by folder/link edits.
+      if (_switchingSheet) {
+        area.classList.remove('sheet-switch');
+        void area.offsetWidth;   // force reflow so the animation re-fires
+        area.classList.add('sheet-switch');
+      }
+
       const sheet = activeSheet();
 
       if (!sheet) {
@@ -1988,46 +2326,46 @@
       }
 
       // ── Build folder list ────────────────────────────────────────
-      const list   = document.createElement('div');
-      list.id      = 'folder-list';
+      const list = document.createElement('div');
+      list.id = 'folder-list';
       const folders = [...sheet.folders].sort((a, b) => a.order - b.order);
 
       folders.forEach(fo => {
         const links = [...fo.links].sort((a, b) => a.order - b.order);
 
         // ── Folder card ──────────────────────────────────────────
-        const card     = document.createElement('div');
+        const card = document.createElement('div');
         card.className = 'folder-card' + (fo.collapsed ? ' collapsed' : '');
         card.dataset.fid = fo.id;
-        card.draggable   = false;
+        card.draggable = false;
 
         // ── Folder header ────────────────────────────────────────
-        const hdr     = document.createElement('div');
+        const hdr = document.createElement('div');
         hdr.className = 'folder-header';
 
-        const chevron     = document.createElement('span');
+        const chevron = document.createElement('span');
         chevron.className = 'folder-chevron';
         chevron.innerHTML = SVG_CHEVRON;
 
-        const nmEl     = document.createElement('span');
+        const nmEl = document.createElement('span');
         nmEl.className = 'folder-name';
         nmEl.textContent = fo.name;
 
-        const badge     = document.createElement('span');
+        const badge = document.createElement('span');
         badge.className = 'folder-badge';
         badge.textContent = links.length;
 
-        const dragHdl     = document.createElement('span');
+        const dragHdl = document.createElement('span');
         dragHdl.className = 'folder-drag-hdl';
         dragHdl.innerHTML = SVG_DOTS;
-        dragHdl.title     = 'Drag to reorder';
+        dragHdl.title = 'Drag to reorder';
         // Drag handle: set card draggable only while handle is held
         dragHdl.addEventListener('mousedown', () => { card.draggable = true; });
-        dragHdl.addEventListener('mouseup',   () => { card.draggable = false; });
+        dragHdl.addEventListener('mouseup', () => { card.draggable = false; });
 
-        const delBtn     = document.createElement('button');
+        const delBtn = document.createElement('button');
         delBtn.className = 'folder-del';
-        delBtn.title     = 'Delete folder';
+        delBtn.title = 'Delete folder';
         delBtn.innerHTML = SVG_TRASH;
 
         hdr.append(chevron, nmEl, badge, dragHdl, delBtn);
@@ -2035,8 +2373,8 @@
         // Header click → collapse/expand (ignore clicks on interactive children)
         hdr.addEventListener('click', e => {
           if (e.target.closest('.folder-del') ||
-              e.target.closest('.folder-drag-hdl') ||
-              e.target.closest('.folder-rename-inp')) return;
+            e.target.closest('.folder-drag-hdl') ||
+            e.target.closest('.folder-rename-inp')) return;
           toggleFolder(sheet.id, fo.id);
         });
 
@@ -2054,19 +2392,19 @@
 
         // Folder drag-to-reorder wiring
         card.addEventListener('dragstart', e => onFolderDragStart(e, sheet.id, fo.id));
-        card.addEventListener('dragover',  e => onFolderDragOver(e, card));
-        card.addEventListener('drop',      e => onFolderDrop(e, sheet.id, fo.id));
-        card.addEventListener('dragend',   onFolderDragEnd);
+        card.addEventListener('dragover', e => onFolderDragOver(e, card));
+        card.addEventListener('drop', e => onFolderDrop(e, sheet.id, fo.id));
+        card.addEventListener('dragend', onFolderDragEnd);
         // Reset draggable when mouse leaves so accidental drags don't fire
         card.addEventListener('dragend', () => { card.draggable = false; });
 
         // ── Folder body ──────────────────────────────────────────
-        const body     = document.createElement('div');
+        const body = document.createElement('div');
         body.className = 'folder-body';
 
         if (links.length > 0) {
           // Column header
-          const colHdr     = document.createElement('div');
+          const colHdr = document.createElement('div');
           colHdr.className = 'link-col-hdr';
           colHdr.innerHTML = `
             <span></span>
@@ -2077,21 +2415,21 @@
           body.appendChild(colHdr);
 
           // Link rows wrapper (needed for :last-child border removal)
-          const rowsWrap     = document.createElement('div');
+          const rowsWrap = document.createElement('div');
           rowsWrap.className = 'link-rows-wrap';
           links.forEach(lk => rowsWrap.appendChild(buildLinkRow(sheet.id, fo.id, lk)));
           body.appendChild(rowsWrap);
         } else {
-          const empty     = document.createElement('div');
+          const empty = document.createElement('div');
           empty.className = 'folder-empty';
           empty.textContent = 'No links yet — click + Add Link below';
           body.appendChild(empty);
         }
 
         // Add Link button
-        const alBar     = document.createElement('div');
+        const alBar = document.createElement('div');
         alBar.className = 'add-link-bar';
-        const alBtn     = document.createElement('button');
+        const alBtn = document.createElement('button');
         alBtn.className = 'btn-add-link';
         alBtn.innerHTML = SVG_PLUS + ' + Add Link';
         alBtn.addEventListener('click', () => addLink(sheet.id, fo.id));
@@ -2117,24 +2455,24 @@
 
       ordered().forEach(sheet => {
         const tab = document.createElement('div');
-        tab.className  = 'sheet-tab' + (sheet.id === state.settings.activeSheetId ? ' active' : '');
+        tab.className = 'sheet-tab' + (sheet.id === state.settings.activeSheetId ? ' active' : '');
         tab.dataset.id = sheet.id;
-        tab.draggable  = true;
+        tab.draggable = true;
 
         // Name
         const nm = document.createElement('span');
-        nm.className   = 'tab-name';
+        nm.className = 'tab-name';
         nm.textContent = sheet.name;
 
         // Last edit date
         const dt = document.createElement('span');
-        dt.className   = 'tab-date';
+        dt.className = 'tab-date';
         dt.textContent = fmtDate(sheet.lastEditDate);
 
         // Delete ✕
         const del = document.createElement('span');
-        del.className   = 'tab-del';
-        del.title       = 'Delete sheet';
+        del.className = 'tab-del';
+        del.title = 'Delete sheet';
         del.textContent = '✕';
 
         tab.append(nm, dt, del);
@@ -2160,17 +2498,17 @@
 
         // Drag-to-reorder
         tab.addEventListener('dragstart', onDragStart);
-        tab.addEventListener('dragover',  onDragOver);
-        tab.addEventListener('drop',      onDrop);
-        tab.addEventListener('dragend',   onDragEnd);
+        tab.addEventListener('dragover', onDragOver);
+        tab.addEventListener('drop', onDrop);
+        tab.addEventListener('dragend', onDragEnd);
 
         bar.appendChild(tab);
       });
 
       // ── + New sheet button ──────────────────────────────────────
       const plus = document.createElement('div');
-      plus.id          = 'tab-add';
-      plus.title       = 'New sheet';
+      plus.id = 'tab-add';
+      plus.title = 'New sheet';
       plus.textContent = '+';
       plus.addEventListener('click', startCreate);
       bar.appendChild(plus);
@@ -2185,9 +2523,9 @@
       if (tab.querySelector('.tab-rename-input')) return;  // already renaming
 
       const inp = document.createElement('input');
-      inp.type      = 'text';
+      inp.type = 'text';
       inp.className = 'tab-rename-input';
-      inp.value     = sheet.name;
+      inp.value = sheet.name;
       nm.replaceWith(inp);
       inp.focus();
       inp.select();
@@ -2204,7 +2542,7 @@
 
       inp.addEventListener('blur', commit);
       inp.addEventListener('keydown', e => {
-        if (e.key === 'Enter')  { e.preventDefault(); commit(); }
+        if (e.key === 'Enter') { e.preventDefault(); commit(); }
         if (e.key === 'Escape') { e.preventDefault(); cancel(); }
       });
     }
@@ -2215,15 +2553,15 @@
     ────────────────────────────────────────────────────────────────── */
 
     function startCreate() {
-      const bar  = document.getElementById('tab-bar');
+      const bar = document.getElementById('tab-bar');
       const plus = document.getElementById('tab-add');
       if (bar.querySelector('.tab-create-input')) return;  // already open
 
       const inp = document.createElement('input');
-      inp.type        = 'text';
-      inp.className   = 'tab-create-input';
+      inp.type = 'text';
+      inp.className = 'tab-create-input';
       inp.placeholder = 'Sheet name…';
-      inp.maxLength   = 48;
+      inp.maxLength = 48;
       bar.insertBefore(inp, plus);
       inp.focus();
 
@@ -2232,7 +2570,7 @@
         if (done) return; done = true;
         const v = inp.value.trim();
         if (v) addSheet(v);
-        else   { inp.remove(); renderTabs(); }
+        else { inp.remove(); renderTabs(); }
       };
       const cancel = () => {
         if (done) return; done = true;
@@ -2242,7 +2580,7 @@
 
       inp.addEventListener('blur', commit);
       inp.addEventListener('keydown', e => {
-        if (e.key === 'Enter')  { e.preventDefault(); commit(); }
+        if (e.key === 'Enter') { e.preventDefault(); commit(); }
         if (e.key === 'Escape') { e.preventDefault(); cancel(); }
       });
     }
@@ -2277,13 +2615,13 @@
         if (!Array.isArray(sh.folders)) sh.folders = [];
         sh.folders.forEach((fo, fi) => {
           if (typeof fo.collapsed !== 'boolean') fo.collapsed = false;
-          if (typeof fo.order     === 'undefined') fo.order   = fi;
+          if (typeof fo.order === 'undefined') fo.order = fi;
           if (!Array.isArray(fo.links)) fo.links = [];
           fo.links.forEach((lk, li) => {
-            if (typeof lk.name        === 'undefined') lk.name        = '';
-            if (typeof lk.url         === 'undefined') lk.url         = '';
+            if (typeof lk.name === 'undefined') lk.name = '';
+            if (typeof lk.url === 'undefined') lk.url = '';
             if (typeof lk.description === 'undefined') lk.description = '';
-            if (typeof lk.order       === 'undefined') lk.order       = li;
+            if (typeof lk.order === 'undefined') lk.order = li;
           });
         });
       });
@@ -2298,7 +2636,7 @@
 
       // ── Wire up + Add Folder button ──
       document.getElementById('btn-add-folder')
-              .addEventListener('click', addFolder);
+        .addEventListener('click', addFolder);
 
       // ── Wire up search (Phase 3) ─────────────────────────────────
       const searchInput = document.getElementById('search-input');
@@ -2339,4 +2677,5 @@
     })();
   </script>
 </body>
+
 </html>
