@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>URL Manager</title>
+
+  <!-- Google Fonts: Syne · DM Mono · DM Sans (unchanged from Phase 1–5) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="/src/style.css">
+</head>
+
+<body>
+
+  <!-- ── Viewer mode banner (shown when not authenticated) ──────────── -->
+  <div id="viewer-banner" style="display:none">
+    <span>👁 Viewer Mode — Demo Access Only</span>
+    <button id="btn-banner-login">Login</button>
+  </div>
+
+  <!-- ── Top bar ────────────────────────────────────────────────────── -->
+  <header id="top-bar">
+    <div id="brand">
+      <span class="b-url">url</span><span class="b-mgr">mgr</span>
+    </div>
+    <div id="search-wrap">
+      <input id="search-input" type="text" placeholder="Search…"
+             autocomplete="off" spellcheck="false" aria-label="Search links">
+      <div id="search-dropdown" role="listbox" aria-label="Search results"></div>
+    </div>
+    <div id="top-actions"></div>
+  </header>
+
+  <!-- ── Main content area ─────────────────────────────────────────── -->
+  <main id="main-area"></main>
+
+  <!-- ── Add Folder bar (pinned above tab bar) ─────────────────────── -->
+  <div id="folder-add-bar">
+    <button id="btn-add-folder">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none"
+           stroke="currentColor" stroke-width="1.8"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M1 4.5A1.5 1.5 0 0 1 2.5 3H6l2 2h5.5A1.5 1.5 0 0 1 15 6.5V12A1.5 1.5 0 0 1 13.5 13.5h-11A1.5 1.5 0 0 1 1 12Z"/>
+        <line x1="8" y1="7.5" x2="8" y2="11.5"/>
+        <line x1="6" y1="9.5" x2="10" y2="9.5"/>
+      </svg>
+      + Add Folder
+    </button>
+  </div>
+
+  <!-- ── Sheet tab bar ──────────────────────────────────────────────── -->
+  <nav id="tab-bar"></nav>
+
+  <!-- Auth modal (injected by JS when needed) -->
+  <div id="auth-modal-root"></div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
