@@ -153,14 +153,35 @@ CREATE INDEX IF NOT EXISTS idx_links_order       ON links   (folder_id, "order")
 
 
 -- ══════════════════════════════════════════════════════════════════════
--- POST-SETUP CHECKLIST (run manually in Dashboard after this script)
+-- POST-SETUP CHECKLIST (do these in the Supabase Dashboard after running this script)
 -- ══════════════════════════════════════════════════════════════════════
--- 1. Authentication → Providers → Email: enable "Email + Password" ✓
--- 2. Authentication → Providers → Email: enable "Magic Links"       ✓
--- 3. Authentication → Users → Invite user with your email address   ✓
---    (or sign up via the app — first user becomes the admin)
--- 4. Authentication → Settings → "Enable email confirmations": OFF  ✓
---    (single-user app; email confirmation just adds friction)
--- 5. Authentication → Settings → JWT expiry: 604800 (7 days)        ✓
--- 6. API → copy Project URL and anon key → paste into app/.env      ✓
+-- 1. Authentication → Sign In / Providers → Email: make sure the Email
+--    provider is enabled. Password login and magic links both work
+--    through it.
+--
+-- 2. Authentication → Users → Add user → Create new user: enter your
+--    email and a strong password, and tick "Auto Confirm User".
+--    This is the ONLY account the app should ever have.
+--
+-- 3. Authentication → Sign In / Providers → User Signups: turn OFF
+--    "Allow new users to sign up" and save.   *** REQUIRED ***
+--    The anon key is public by design. With sign-ups left on, a stranger
+--    could create an account, mark their own sheet public, and have it
+--    appear in your viewer mode. Switching this off closes that door;
+--    your own account (step 2) keeps working.
+--
+-- 4. Leave the access token expiry at its default (3600 seconds).
+--    The app refreshes tokens automatically, so you stay signed in
+--    without a longer lifetime.
+--
+-- 5. Copy your Project URL and anon key into app/.env
+--    Project URL looks like https://<ref>.supabase.co  (no /rest/v1/ on
+--    the end). The anon key is on the "Legacy anon, service_role API
+--    keys" tab. Never use or copy the service_role key.
+--
+-- 6. After deploying, add your site address under Authentication →
+--    URL Configuration (Site URL and Redirect URLs) so magic links
+--    return to the right place.
+--
+-- Full walkthrough: the "Build Your Own" page in the project wiki.
 -- ══════════════════════════════════════════════════════════════════════
