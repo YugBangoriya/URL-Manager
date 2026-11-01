@@ -16,13 +16,15 @@
 
 </div>
 
-<!--
-  SCREENSHOTS (optional, recommended):
-  1. Save two screenshots into a docs/ folder: docs/viewer-mode.png and docs/admin-mode.png
-  2. Delete this comment and uncomment the line below.
+---
 
-  <p align="center"><img src="docs/viewer-mode.png" width="48%"> <img src="docs/admin-mode.png" width="48%"></p>
--->
+<div align="center">
+  
+## Preview
+
+<img width="1080" alt="URL Manager Preview" src="https://github.com/user-attachments/assets/6ba2eaff-a586-437a-9d9b-8dc31275e779" />
+
+</div>
 
 ---
 
