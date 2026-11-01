@@ -27,21 +27,21 @@ let state = {
   sheets: [],         // Full tree loaded from Supabase
   settings: {
     // Theme and active sheet are per-device prefs — localStorage is fine
-    theme:         localStorage.getItem('urlmgr_theme')  || 'dark',
+    theme: localStorage.getItem('urlmgr_theme') || 'dark',
     activeSheetId: localStorage.getItem('urlmgr_active') || null
   }
 }
 
-let currentUser      = null    // Supabase user object or null
-let isViewer         = true    // true = not authenticated
-let _switchingSheet  = false   // Phase 5 micro-animation flag
-let searchTimer      = null    // Debounce handle for search
+let currentUser = null    // Supabase user object or null
+let isViewer = true    // true = not authenticated
+let _switchingSheet = false   // Phase 5 micro-animation flag
+let searchTimer = null    // Debounce handle for search
 
 // Drag state
-let dragId           = null
-let folderDragId     = null
+let dragId = null
+let folderDragId = null
 let folderDragSheetId = null
-let linkDragId       = null
+let linkDragId = null
 let linkDragFolderId = null
 
 
@@ -50,7 +50,7 @@ let linkDragFolderId = null
 // ══════════════════════════════════════════════════════════════════════
 
 function isoToday() {
-  const d  = new Date()
+  const d = new Date()
   const yy = d.getFullYear()
   const mm = String(d.getMonth() + 1).padStart(2, '0')
   const dd = String(d.getDate()).padStart(2, '0')
@@ -60,13 +60,13 @@ function isoToday() {
 function fmtDate(iso) {
   if (!iso) return '—'
   const [y, m, d] = iso.split('-')
-  const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+  const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
   return `${d} ${MON[+m - 1] ?? ''} ${y}`
 }
 
 function esc(s) {
   return String(s ?? '').replace(/[&<>"']/g, c =>
-    ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":"&#39;" }[c])
+    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": "&#39;" }[c])
   )
 }
 
@@ -114,18 +114,19 @@ async function loadData() {
 // ══════════════════════════════════════════════════════════════════════
 
 const SVG_CHEVRON = `<svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 4 6 8 10 4"/></svg>`
-const SVG_DOTS    = `<svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor"><circle cx="3.5" cy="2.5" r="1.1"/><circle cx="3.5" cy="6" r="1.1"/><circle cx="3.5" cy="9.5" r="1.1"/><circle cx="8.5" cy="2.5" r="1.1"/><circle cx="8.5" cy="6" r="1.1"/><circle cx="8.5" cy="9.5" r="1.1"/></svg>`
-const SVG_TRASH   = `<svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 5 13 5"/><path d="M6 5V3h4v2"/><path d="M5 5l.9 8.5h4.2L11 5"/></svg>`
-const SVG_COPY    = `<svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="5" width="8" height="9" rx="1.5"/><path d="M10 5V3.5A1.5 1.5 0 0 0 8.5 2H4A1.5 1.5 0 0 0 2.5 3.5V10A1.5 1.5 0 0 0 4 11.5H5"/></svg>`
-const SVG_CHECK   = `<svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 8 6 12 14 4"/></svg>`
-const SVG_PLUS    = `<svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="6" y1="1" x2="6" y2="11"/><line x1="1" y1="6" x2="11" y2="6"/></svg>`
-const SVG_SUN     = `<svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="2.8"/><line x1="8" y1="1" x2="8" y2="2.6"/><line x1="8" y1="13.4" x2="8" y2="15"/><line x1="1" y1="8" x2="2.6" y2="8"/><line x1="13.4" y1="8" x2="15" y2="8"/><line x1="3.1" y1="3.1" x2="4.2" y2="4.2"/><line x1="11.8" y1="11.8" x2="12.9" y2="12.9"/><line x1="12.9" y1="3.1" x2="11.8" y2="4.2"/><line x1="4.2" y1="11.8" x2="3.1" y2="12.9"/></svg>`
-const SVG_MOON    = `<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 10.5A6 6 0 0 1 5.5 2.5a6.1 6.1 0 1 0 8 8Z"/></svg>`
-const SVG_EXPORT  = `<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M2 11v2a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-2"/><polyline points="5 7.5 8 10.5 11 7.5"/><line x1="8" y1="2" x2="8" y2="10.5"/></svg>`
-const SVG_LOGOUT  = `<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3H3a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h3"/><polyline points="11 11 14 8 11 5"/><line x1="14" y1="8" x2="6" y2="8"/></svg>`
-const SVG_LOGIN   = `<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3h3a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1h-3"/><polyline points="7 11 4 8 7 5"/><line x1="4" y1="8" x2="12" y2="8"/></svg>`
-const SVG_GLOBE   = `<svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6"/><path d="M2 8h12M8 2c-2 2-3 4-3 6s1 4 3 6M8 2c2 2 3 4 3 6s-1 4-3 6"/></svg>`
-const SVG_LOCK    = `<svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="10" height="8" rx="1.5"/><path d="M5 7V5a3 3 0 0 1 6 0v2"/></svg>`
+const SVG_DOTS = `<svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor"><circle cx="3.5" cy="2.5" r="1.1"/><circle cx="3.5" cy="6" r="1.1"/><circle cx="3.5" cy="9.5" r="1.1"/><circle cx="8.5" cy="2.5" r="1.1"/><circle cx="8.5" cy="6" r="1.1"/><circle cx="8.5" cy="9.5" r="1.1"/></svg>`
+const SVG_TRASH = `<svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 5 13 5"/><path d="M6 5V3h4v2"/><path d="M5 5l.9 8.5h4.2L11 5"/></svg>`
+const SVG_COPY = `<svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="5" width="8" height="9" rx="1.5"/><path d="M10 5V3.5A1.5 1.5 0 0 0 8.5 2H4A1.5 1.5 0 0 0 2.5 3.5V10A1.5 1.5 0 0 0 4 11.5H5"/></svg>`
+const SVG_CHECK = `<svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 8 6 12 14 4"/></svg>`
+const SVG_PLUS = `<svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="6" y1="1" x2="6" y2="11"/><line x1="1" y1="6" x2="11" y2="6"/></svg>`
+const SVG_SUN = `<svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="2.8"/><line x1="8" y1="1" x2="8" y2="2.6"/><line x1="8" y1="13.4" x2="8" y2="15"/><line x1="1" y1="8" x2="2.6" y2="8"/><line x1="13.4" y1="8" x2="15" y2="8"/><line x1="3.1" y1="3.1" x2="4.2" y2="4.2"/><line x1="11.8" y1="11.8" x2="12.9" y2="12.9"/><line x1="12.9" y1="3.1" x2="11.8" y2="4.2"/><line x1="4.2" y1="11.8" x2="3.1" y2="12.9"/></svg>`
+const SVG_MOON = `<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 10.5A6 6 0 0 1 5.5 2.5a6.1 6.1 0 1 0 8 8Z"/></svg>`
+const SVG_EXPORT = `<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M2 11v2a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-2"/><polyline points="5 7.5 8 10.5 11 7.5"/><line x1="8" y1="2" x2="8" y2="10.5"/></svg>`
+const SVG_LOGOUT = `<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3H3a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h3"/><polyline points="11 11 14 8 11 5"/><line x1="14" y1="8" x2="6" y2="8"/></svg>`
+const SVG_LOGIN = `<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3h3a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1h-3"/><polyline points="7 11 4 8 7 5"/><line x1="4" y1="8" x2="12" y2="8"/></svg>`
+const SVG_GLOBE = `<svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6"/><path d="M2 8h12M8 2c-2 2-3 4-3 6s1 4 3 6M8 2c2 2 3 4 3 6s-1 4-3 6"/></svg>`
+const SVG_PENCIL = `<svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 14l1-3.5L11.5 2 14 4.5 5.5 13z"/><path d="M9.5 4l2.5 2.5"/></svg>`
+const SVG_LOCK = `<svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="10" height="8" rx="1.5"/><path d="M5 7V5a3 3 0 0 1 6 0v2"/></svg>`
 
 
 // ══════════════════════════════════════════════════════════════════════
@@ -137,7 +138,7 @@ function showConfirm(title, msg, onOk, opts = {}) {
   const okClass = opts.okClass ?? 'btn-danger'
   const el = document.createElement('div')
   el.className = 'dlg-overlay'
-  el.tabIndex  = -1
+  el.tabIndex = -1
   el.innerHTML = `
     <div class="dlg-box" role="dialog" aria-modal="true">
       <div class="dlg-title">${title}</div>
@@ -151,8 +152,8 @@ function showConfirm(title, msg, onOk, opts = {}) {
   el.focus()
   const close = () => el.remove()
   el.querySelector('[data-r="cancel"]').onclick = close
-  el.querySelector('[data-r="ok"]').onclick     = () => { close(); onOk() }
-  el.addEventListener('click',   e => { if (e.target === el) close() })
+  el.querySelector('[data-r="ok"]').onclick = () => { close(); onOk() }
+  el.addEventListener('click', e => { if (e.target === el) close() })
   el.addEventListener('keydown', e => { if (e.key === 'Escape') close() })
 }
 
@@ -167,7 +168,7 @@ function showAuthModal() {
 
   const el = document.createElement('div')
   el.className = 'dlg-overlay'
-  el.tabIndex  = -1
+  el.tabIndex = -1
   el.innerHTML = `
     <div class="dlg-box auth-dlg" role="dialog" aria-modal="true" aria-label="Login">
       <div class="dlg-title">Admin Login</div>
@@ -212,32 +213,32 @@ function showAuthModal() {
   // Toggle between password mode and magic-link mode
   el.querySelector('#btn-magic-link').addEventListener('click', () => {
     magicMode = !magicMode
-    const pwWrap  = el.querySelector('#auth-pw-wrap')
-    const submit  = el.querySelector('#btn-auth-submit')
+    const pwWrap = el.querySelector('#auth-pw-wrap')
+    const submit = el.querySelector('#btn-auth-submit')
     const magicBtn = el.querySelector('#btn-magic-link')
-    pwWrap.style.display    = magicMode ? 'none' : ''
-    submit.textContent      = magicMode ? 'Send Link' : 'Login'
-    magicBtn.textContent    = magicMode ? 'Use password instead' : 'Send a magic link instead'
+    pwWrap.style.display = magicMode ? 'none' : ''
+    submit.textContent = magicMode ? 'Send Link' : 'Login'
+    magicBtn.textContent = magicMode ? 'Use password instead' : 'Send a magic link instead'
     hideError()
   })
 
   // Submit handler — works for both modes
   el.querySelector('#btn-auth-submit').addEventListener('click', async () => {
     hideError()
-    const email    = el.querySelector('#auth-email').value.trim()
+    const email = el.querySelector('#auth-email').value.trim()
     const password = el.querySelector('#auth-password').value
 
     if (!email) { showError('Email is required.'); return }
 
     const submitBtn = el.querySelector('#btn-auth-submit')
-    submitBtn.disabled   = true
+    submitBtn.disabled = true
     submitBtn.textContent = magicMode ? 'Sending…' : 'Logging in…'
 
     if (magicMode) {
       const { error } = await signInWithMagicLink(email)
       if (error) {
         showError('Could not send link. Check your email address.')
-        submitBtn.disabled    = false
+        submitBtn.disabled = false
         submitBtn.textContent = 'Send Link'
       } else {
         el.querySelector('.dlg-box').innerHTML = `
@@ -249,14 +250,14 @@ function showAuthModal() {
     } else {
       if (!password) {
         showError('Password is required.')
-        submitBtn.disabled    = false
+        submitBtn.disabled = false
         submitBtn.textContent = 'Login'
         return
       }
       const { error } = await signInWithPassword(email, password)
       if (error) {
         showError('Incorrect email or password.')
-        submitBtn.disabled    = false
+        submitBtn.disabled = false
         submitBtn.textContent = 'Login'
       }
       // On success, onAuthChange fires → modal is removed there
@@ -288,16 +289,16 @@ function initTopActions() {
 
   if (!isViewer) {
     // Export button (admin only)
-    const expBtn     = document.createElement('button')
+    const expBtn = document.createElement('button')
     expBtn.className = 'tap-btn'
-    expBtn.title     = 'Export data as JSON'
+    expBtn.title = 'Export data as JSON'
     expBtn.innerHTML = SVG_EXPORT
     expBtn.addEventListener('click', exportData)
 
     // Logout button
-    const outBtn     = document.createElement('button')
+    const outBtn = document.createElement('button')
     outBtn.className = 'tap-btn'
-    outBtn.title     = 'Logout'
+    outBtn.title = 'Logout'
     outBtn.innerHTML = SVG_LOGOUT
     outBtn.addEventListener('click', async () => {
       await signOut()
@@ -307,21 +308,21 @@ function initTopActions() {
     bar.append(expBtn, outBtn)
   } else {
     // Login button (viewer mode)
-    const inBtn     = document.createElement('button')
+    const inBtn = document.createElement('button')
     inBtn.className = 'tap-btn'
-    inBtn.title     = 'Admin Login'
+    inBtn.title = 'Admin Login'
     inBtn.innerHTML = SVG_LOGIN
     inBtn.addEventListener('click', showAuthModal)
     bar.appendChild(inBtn)
   }
 
   // Theme toggle — always visible
-  const themeBtn     = document.createElement('button')
-  themeBtn.id        = 'btn-theme'
+  const themeBtn = document.createElement('button')
+  themeBtn.id = 'btn-theme'
   themeBtn.className = 'tap-btn'
-  const startsLight  = document.body.classList.contains('light')
+  const startsLight = document.body.classList.contains('light')
   themeBtn.innerHTML = startsLight ? SVG_MOON : SVG_SUN
-  themeBtn.title     = startsLight ? 'Switch to dark mode' : 'Switch to light mode'
+  themeBtn.title = startsLight ? 'Switch to dark mode' : 'Switch to light mode'
   themeBtn.addEventListener('click', toggleTheme)
   bar.appendChild(themeBtn)
 }
@@ -352,7 +353,7 @@ function toggleTheme() {
   const btn = document.getElementById('btn-theme')
   if (!btn) return
   btn.innerHTML = isNowLight ? SVG_MOON : SVG_SUN
-  btn.title     = isNowLight ? 'Switch to dark mode' : 'Switch to light mode'
+  btn.title = isNowLight ? 'Switch to dark mode' : 'Switch to light mode'
 }
 
 
@@ -361,12 +362,12 @@ function toggleTheme() {
 // ══════════════════════════════════════════════════════════════════════
 
 function exportData() {
-  const d  = new Date()
-  const ds = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
+  const d = new Date()
+  const ds = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
   const payload = JSON.stringify({ exported_at: new Date().toISOString(), sheets: state.sheets }, null, 2)
-  const blob    = new Blob([payload], { type: 'application/json' })
-  const url     = URL.createObjectURL(blob)
-  const a       = Object.assign(document.createElement('a'), { href: url, download: `url-manager-${ds}.json`, style: 'display:none' })
+  const blob = new Blob([payload], { type: 'application/json' })
+  const url = URL.createObjectURL(blob)
+  const a = Object.assign(document.createElement('a'), { href: url, download: `url-manager-${ds}.json`, style: 'display:none' })
   document.body.appendChild(a)
   a.click()
   document.body.removeChild(a)
@@ -399,11 +400,14 @@ async function addSheet(name) {
 
 async function doRenameSheet(id, name) {
   name = name.trim()
-  if (!name) return
   const sh = state.sheets.find(s => s.id === id)
   if (!sh) return
+  // Empty or unchanged name: no database write, no last-edit bump.
+  // Re-render so the tab goes back from the input to the normal label.
+  if (!name || name === sh.name) { renderTabs(); return }
   const { error } = await renameSheet(id, name)
-  if (error) return
+  // Save failed: restore the old name instead of leaving the input stuck on screen
+  if (error) { renderTabs(); return }
   sh.name = name
   sh.last_edit_date = isoToday()
   renderAll()
@@ -412,7 +416,7 @@ async function doRenameSheet(id, name) {
 async function doDeleteSheet(id) {
   const idx = state.sheets.findIndex(s => s.id === id)
   if (idx < 0) return
-  const sh  = state.sheets[idx]
+  const sh = state.sheets[idx]
   const msg = sh.folders.length
     ? `"${esc(sh.name)}" contains folders and links. Delete everything?`
     : `Delete the sheet "${esc(sh.name)}"?`
@@ -510,9 +514,9 @@ async function doToggleFolder(sheetId, folderId) {
 function startFolderRename(card, sheetId, folderId, nmEl) {
   if (card.querySelector('.folder-rename-inp')) return
   const inp = document.createElement('input')
-  inp.type      = 'text'
+  inp.type = 'text'
   inp.className = 'folder-rename-inp'
-  inp.value     = nmEl.textContent
+  inp.value = nmEl.textContent
   nmEl.replaceWith(inp)
   inp.focus(); inp.select()
   let done = false
@@ -526,7 +530,7 @@ function startFolderRename(card, sheetId, folderId, nmEl) {
   const cancel = () => { if (done) return; done = true; inp.replaceWith(nmEl) }
   inp.addEventListener('blur', commit)
   inp.addEventListener('keydown', e => {
-    if (e.key === 'Enter')  { e.preventDefault(); commit() }
+    if (e.key === 'Enter') { e.preventDefault(); commit() }
     if (e.key === 'Escape') { e.preventDefault(); cancel() }
   })
 }
@@ -549,7 +553,7 @@ async function addLink(sheetId, folderId) {
   renderMain()
   renderTabs()
   setTimeout(() => {
-    const row  = document.querySelector(`.link-row[data-lid="${data.id}"]`)
+    const row = document.querySelector(`.link-row[data-lid="${data.id}"]`)
     const cell = row?.querySelector('.link-cell[data-field="name"]')
     if (cell) startCellEdit(cell, sheetId, folderId, data.id, 'name')
   }, 20)
@@ -565,7 +569,7 @@ async function doUpdateLink(sheetId, folderId, linkId, field, value) {
   if (error) return
   lk[field] = value
   sh.last_edit_date = isoToday()
-  const row  = document.querySelector(`.link-row[data-lid="${linkId}"]`)
+  const row = document.querySelector(`.link-row[data-lid="${linkId}"]`)
   const cell = row?.querySelector(`.link-cell[data-field="${field}"]`)
   if (cell) renderCellDisplay(cell, field, value)
   if (field === 'url') {
@@ -635,7 +639,7 @@ function startCellEdit(cell, sheetId, folderId, linkId, field) {
   const cancel = () => { if (done) return; done = true; renderCellDisplay(cell, field, original) }
   inp.addEventListener('blur', commit)
   inp.addEventListener('keydown', e => {
-    if (e.key === 'Enter')  { e.preventDefault(); inp.blur() }
+    if (e.key === 'Enter') { e.preventDefault(); inp.blur() }
     if (e.key === 'Escape') { e.preventDefault(); inp.removeEventListener('blur', commit); cancel() }
   })
 }
@@ -655,7 +659,7 @@ function copyToClipboard(text, btn) {
       value: text, style: 'position:fixed;opacity:0;top:0;left:0'
     })
     document.body.appendChild(ta); ta.select()
-    try { document.execCommand('copy') } catch(e) {}
+    try { document.execCommand('copy') } catch (e) { }
     ta.remove()
   }
   if (navigator.clipboard?.writeText) {
@@ -722,11 +726,11 @@ function onFolderDrop(e, sheetId, targetFolderId) {
   e.preventDefault()
   document.querySelectorAll('.folder-card').forEach(c => c.classList.remove('folder-drag-over'))
   if (!folderDragId || folderDragId === targetFolderId || folderDragSheetId !== sheetId) return
-  const sh     = state.sheets.find(s => s.id === sheetId)
+  const sh = state.sheets.find(s => s.id === sheetId)
   if (!sh) return
   const sorted = [...sh.folders].sort((a, b) => a.order - b.order)
-  const si     = sorted.findIndex(f => f.id === folderDragId)
-  const ti     = sorted.findIndex(f => f.id === targetFolderId)
+  const si = sorted.findIndex(f => f.id === folderDragId)
+  const ti = sorted.findIndex(f => f.id === targetFolderId)
   if (si < 0 || ti < 0) return
   const [moved] = sorted.splice(si, 1)
   sorted.splice(ti, 0, moved)
@@ -760,12 +764,12 @@ function onLinkDrop(e, sheetId, folderId, targetLinkId) {
   e.preventDefault()
   document.querySelectorAll('.link-row').forEach(r => r.classList.remove('link-drag-over'))
   if (!linkDragId || linkDragId === targetLinkId || linkDragFolderId !== folderId) return
-  const sh     = state.sheets.find(s => s.id === sheetId)
-  const fo     = sh?.folders.find(f => f.id === folderId)
+  const sh = state.sheets.find(s => s.id === sheetId)
+  const fo = sh?.folders.find(f => f.id === folderId)
   if (!fo) return
   const sorted = [...fo.links].sort((a, b) => a.order - b.order)
-  const si     = sorted.findIndex(l => l.id === linkDragId)
-  const ti     = sorted.findIndex(l => l.id === targetLinkId)
+  const si = sorted.findIndex(l => l.id === linkDragId)
+  const ti = sorted.findIndex(l => l.id === targetLinkId)
   if (si < 0 || ti < 0) return
   const [moved] = sorted.splice(si, 1)
   sorted.splice(ti, 0, moved)
@@ -787,30 +791,30 @@ function buildLinkRow(sheetId, folderId, lk) {
   const row = document.createElement('div')
   row.className = 'link-row'
   row.dataset.lid = lk.id
-  row.draggable   = false
+  row.draggable = false
 
   const dh = document.createElement('div')
   dh.className = 'link-drag-hdl'; dh.innerHTML = SVG_DOTS; dh.title = 'Drag to reorder'
   if (!isViewer) {
     dh.addEventListener('mousedown', () => { row.draggable = true })
-    dh.addEventListener('mouseup',   () => { row.draggable = false })
+    dh.addEventListener('mouseup', () => { row.draggable = false })
   }
 
-  const nmCell   = Object.assign(document.createElement('div'), { className: 'link-cell' })
+  const nmCell = Object.assign(document.createElement('div'), { className: 'link-cell' })
   nmCell.dataset.field = 'name'; renderCellDisplay(nmCell, 'name', lk.name)
 
-  const urlCell  = Object.assign(document.createElement('div'), { className: 'link-cell' })
+  const urlCell = Object.assign(document.createElement('div'), { className: 'link-cell' })
   urlCell.dataset.field = 'url'; renderCellDisplay(urlCell, 'url', lk.url)
 
   const descCell = Object.assign(document.createElement('div'), { className: 'link-cell' })
   descCell.dataset.field = 'description'; renderCellDisplay(descCell, 'description', lk.description)
 
-  const actions  = document.createElement('div')
+  const actions = document.createElement('div')
   actions.className = 'link-actions'
 
   const copyBtn = document.createElement('button')
   copyBtn.className = 'lac lac-copy' + (lk.url ? '' : ' lac-disabled')
-  copyBtn.title     = lk.url ? 'Copy URL' : 'No URL to copy'
+  copyBtn.title = lk.url ? 'Copy URL' : 'No URL to copy'
   copyBtn.innerHTML = SVG_COPY
   copyBtn.addEventListener('click', e => {
     e.stopPropagation()
@@ -838,9 +842,9 @@ function buildLinkRow(sheetId, folderId, lk) {
 
   if (!isViewer) {
     row.addEventListener('dragstart', e => onLinkDragStart(e, folderId, lk.id))
-    row.addEventListener('dragover',  e => onLinkDragOver(e, row, folderId))
-    row.addEventListener('drop',      e => onLinkDrop(e, sheetId, folderId, lk.id))
-    row.addEventListener('dragend',   onLinkDragEnd)
+    row.addEventListener('dragover', e => onLinkDragOver(e, row, folderId))
+    row.addEventListener('drop', e => onLinkDrop(e, sheetId, folderId, lk.id))
+    row.addEventListener('dragend', onLinkDragEnd)
   }
 
   row.append(dh, nmCell, urlCell, descCell, actions)
@@ -860,8 +864,8 @@ function performSearch(query) {
     sheet.folders.forEach(folder => {
       folder.links.forEach(link => {
         const hit = (link.name?.toLowerCase().includes(q)) ||
-                    (link.url?.toLowerCase().includes(q)) ||
-                    (link.description?.toLowerCase().includes(q))
+          (link.url?.toLowerCase().includes(q)) ||
+          (link.description?.toLowerCase().includes(q))
         if (hit) results.push({ sheetId: sheet.id, sheetName: sheet.name, folderId: folder.id, folderName: folder.name, linkId: link.id, linkName: link.name, linkUrl: link.url })
       })
     })
@@ -874,19 +878,19 @@ function showSearchDropdown(results, query) {
   dd.innerHTML = ''
   if (!results.length) {
     const empty = document.createElement('div')
-    empty.className   = 'search-empty'
+    empty.className = 'search-empty'
     empty.textContent = `No results for "${query}"`
     dd.appendChild(empty)
   } else {
     results.forEach(r => {
-      const item     = document.createElement('div')
+      const item = document.createElement('div')
       item.className = 'search-result'
       item.setAttribute('role', 'option')
-      const display    = r.linkName || r.linkUrl
-      const nameEl     = document.createElement('div')
+      const display = r.linkName || r.linkUrl
+      const nameEl = document.createElement('div')
       nameEl.className = 'sr-name' + (display ? '' : ' sr-unnamed')
       nameEl.textContent = display || '(unnamed link)'
-      const metaEl     = document.createElement('div')
+      const metaEl = document.createElement('div')
       metaEl.className = 'sr-meta'
       metaEl.textContent = `${r.sheetName} / ${r.folderName}`
       item.append(nameEl, metaEl)
@@ -899,9 +903,9 @@ function showSearchDropdown(results, query) {
 
 function closeSearch() {
   const inp = document.getElementById('search-input')
-  const dd  = document.getElementById('search-dropdown')
+  const dd = document.getElementById('search-dropdown')
   if (inp) inp.value = ''
-  if (dd)  dd.classList.remove('open')
+  if (dd) dd.classList.remove('open')
 }
 
 function collapseDropdown() {
@@ -933,7 +937,7 @@ function navigateToResult(result) {
 // ══════════════════════════════════════════════════════════════════════
 
 function renderMain() {
-  const area  = document.getElementById('main-area')
+  const area = document.getElementById('main-area')
 
   if (_switchingSheet) {
     area.classList.remove('sheet-switch')
@@ -962,41 +966,41 @@ function renderMain() {
     return
   }
 
-  const list    = document.createElement('div')
-  list.id       = 'folder-list'
+  const list = document.createElement('div')
+  list.id = 'folder-list'
   const folders = [...sheet.folders].sort((a, b) => a.order - b.order)
 
   folders.forEach(fo => {
     const links = [...fo.links].sort((a, b) => a.order - b.order)
 
-    const card     = document.createElement('div')
+    const card = document.createElement('div')
     card.className = 'folder-card' + (fo.collapsed ? ' collapsed' : '')
     card.dataset.fid = fo.id
-    card.draggable   = false
+    card.draggable = false
 
-    const hdr     = document.createElement('div')
+    const hdr = document.createElement('div')
     hdr.className = 'folder-header'
 
-    const chevron     = document.createElement('span')
+    const chevron = document.createElement('span')
     chevron.className = 'folder-chevron'; chevron.innerHTML = SVG_CHEVRON
 
-    const nmEl     = document.createElement('span')
+    const nmEl = document.createElement('span')
     nmEl.className = 'folder-name'; nmEl.textContent = fo.name
 
-    const badge     = document.createElement('span')
+    const badge = document.createElement('span')
     badge.className = 'folder-badge'; badge.textContent = links.length
 
-    const dragHdl     = document.createElement('span')
+    const dragHdl = document.createElement('span')
     dragHdl.className = 'folder-drag-hdl'; dragHdl.innerHTML = SVG_DOTS; dragHdl.title = 'Drag to reorder'
 
-    const delBtn     = document.createElement('button')
+    const delBtn = document.createElement('button')
     delBtn.className = 'folder-del'; delBtn.title = 'Delete folder'; delBtn.innerHTML = SVG_TRASH
 
     hdr.append(chevron, nmEl, badge)
 
     if (!isViewer) {
       dragHdl.addEventListener('mousedown', () => { card.draggable = true })
-      dragHdl.addEventListener('mouseup',   () => { card.draggable = false })
+      dragHdl.addEventListener('mouseup', () => { card.draggable = false })
       hdr.append(dragHdl, delBtn)
     }
 
@@ -1009,35 +1013,35 @@ function renderMain() {
       nmEl.addEventListener('dblclick', e => { e.stopPropagation(); startFolderRename(card, sheet.id, fo.id, nmEl) })
       delBtn.addEventListener('click', e => { e.stopPropagation(); doDeleteFolder(sheet.id, fo.id) })
       card.addEventListener('dragstart', e => onFolderDragStart(e, sheet.id, fo.id))
-      card.addEventListener('dragover',  e => onFolderDragOver(e, card))
-      card.addEventListener('drop',      e => onFolderDrop(e, sheet.id, fo.id))
-      card.addEventListener('dragend',   onFolderDragEnd)
-      card.addEventListener('dragend',   () => { card.draggable = false })
+      card.addEventListener('dragover', e => onFolderDragOver(e, card))
+      card.addEventListener('drop', e => onFolderDrop(e, sheet.id, fo.id))
+      card.addEventListener('dragend', onFolderDragEnd)
+      card.addEventListener('dragend', () => { card.draggable = false })
     }
 
-    const body     = document.createElement('div')
+    const body = document.createElement('div')
     body.className = 'folder-body'
 
     if (links.length > 0) {
-      const colHdr     = document.createElement('div')
+      const colHdr = document.createElement('div')
       colHdr.className = 'link-col-hdr'
       colHdr.innerHTML = `<span></span><span>Name</span><span>URL</span><span>Description</span><span></span>`
       body.appendChild(colHdr)
-      const rowsWrap     = document.createElement('div')
+      const rowsWrap = document.createElement('div')
       rowsWrap.className = 'link-rows-wrap'
       links.forEach(lk => rowsWrap.appendChild(buildLinkRow(sheet.id, fo.id, lk)))
       body.appendChild(rowsWrap)
     } else {
-      const empty     = document.createElement('div')
+      const empty = document.createElement('div')
       empty.className = 'folder-empty'
       empty.textContent = isViewer ? 'No links in this folder.' : 'No links yet — click + Add Link below'
       body.appendChild(empty)
     }
 
     if (!isViewer) {
-      const alBar     = document.createElement('div')
+      const alBar = document.createElement('div')
       alBar.className = 'add-link-bar'
-      const alBtn     = document.createElement('button')
+      const alBtn = document.createElement('button')
       alBtn.className = 'btn-add-link'; alBtn.innerHTML = SVG_PLUS + ' + Add Link'
       alBtn.addEventListener('click', () => addLink(sheet.id, fo.id))
       alBar.appendChild(alBtn)
@@ -1063,15 +1067,16 @@ function renderTabs() {
 
   orderedSheets().forEach(sheet => {
     const tab = document.createElement('div')
-    tab.className  = 'sheet-tab' + (sheet.id === state.settings.activeSheetId ? ' active' : '')
+    tab.className = 'sheet-tab' + (sheet.id === state.settings.activeSheetId ? ' active' : '')
     tab.dataset.id = sheet.id
-    tab.draggable  = !isViewer
+    tab.draggable = !isViewer
+    if (!isViewer) tab.classList.add('editable')
 
     const nm = document.createElement('span')
-    nm.className   = 'tab-name'; nm.textContent = sheet.name
+    nm.className = 'tab-name'; nm.textContent = sheet.name
 
     const dt = document.createElement('span')
-    dt.className   = 'tab-date'; dt.textContent = fmtDate(sheet.last_edit_date)
+    dt.className = 'tab-date'; dt.textContent = fmtDate(sheet.last_edit_date)
 
     tab.append(nm, dt)
 
@@ -1080,20 +1085,29 @@ function renderTabs() {
       const pub = document.createElement('span')
       pub.className = 'tab-pub'
       pub.innerHTML = sheet.is_public ? SVG_GLOBE : SVG_LOCK
-      pub.title     = sheet.is_public ? 'Public — click to make private' : 'Private — click to make public'
+      pub.title = sheet.is_public ? 'Public — click to make private' : 'Private — click to make public'
       pub.addEventListener('click', e => { e.stopPropagation(); doToggleSheetPublic(sheet.id) })
 
       // Delete ✕
       const del = document.createElement('span')
-      del.className   = 'tab-del'; del.title = 'Delete sheet'; del.textContent = '✕'
+      del.className = 'tab-del'; del.title = 'Delete sheet'; del.textContent = '✕'
       del.addEventListener('click', e => { e.stopPropagation(); doDeleteSheet(sheet.id) })
 
-      tab.append(pub, del)
-      tab.addEventListener('dblclick', e => { if (e.target === del || e.target === pub) return; startRename(tab, sheet, nm) })
+      // Rename ✎ — a visible button, so renaming isn't hidden behind a double-click
+      const edit = document.createElement('span')
+      edit.className = 'tab-edit'; edit.title = 'Rename sheet'; edit.innerHTML = SVG_PENCIL
+      edit.addEventListener('click', e => { e.stopPropagation(); startRename(tab, sheet, nm) })
+
+      tab.append(edit, pub, del)
+      // Double-clicking the name still works as a shortcut
+      tab.addEventListener('dblclick', e => {
+        if (e.target.closest('.tab-del, .tab-pub, .tab-edit')) return
+        startRename(tab, sheet, nm)
+      })
       tab.addEventListener('dragstart', onDragStart)
-      tab.addEventListener('dragover',  onDragOver)
-      tab.addEventListener('drop',      onDrop)
-      tab.addEventListener('dragend',   onDragEnd)
+      tab.addEventListener('dragover', onDragOver)
+      tab.addEventListener('drop', onDrop)
+      tab.addEventListener('dragend', onDragEnd)
     }
 
     tab.addEventListener('click', e => {
@@ -1116,21 +1130,23 @@ function renderTabs() {
 function startRename(tab, sheet, nm) {
   if (tab.querySelector('.tab-rename-input')) return
   const inp = Object.assign(document.createElement('input'), {
-    type: 'text', className: 'tab-rename-input', value: sheet.name
+    type: 'text', className: 'tab-rename-input', value: sheet.name, maxLength: 48
   })
+  // A draggable parent makes mouse text-selection inside the input unreliable
+  tab.draggable = false
   nm.replaceWith(inp); inp.focus(); inp.select()
   let done = false
   const commit = () => { if (done) return; done = true; doRenameSheet(sheet.id, inp.value.trim() || sheet.name) }
   const cancel = () => { if (done) return; done = true; renderTabs() }
   inp.addEventListener('blur', commit)
   inp.addEventListener('keydown', e => {
-    if (e.key === 'Enter')  { e.preventDefault(); commit() }
+    if (e.key === 'Enter') { e.preventDefault(); commit() }
     if (e.key === 'Escape') { e.preventDefault(); cancel() }
   })
 }
 
 function startCreate() {
-  const bar  = document.getElementById('tab-bar')
+  const bar = document.getElementById('tab-bar')
   const plus = document.getElementById('tab-add')
   if (bar.querySelector('.tab-create-input')) return
   const inp = Object.assign(document.createElement('input'), {
@@ -1146,7 +1162,7 @@ function startCreate() {
   const cancel = () => { if (done) return; done = true; inp.remove(); renderTabs() }
   inp.addEventListener('blur', commit)
   inp.addEventListener('keydown', e => {
-    if (e.key === 'Enter')  { e.preventDefault(); commit() }
+    if (e.key === 'Enter') { e.preventDefault(); commit() }
     if (e.key === 'Escape') { e.preventDefault(); cancel() }
   })
 }
@@ -1178,8 +1194,8 @@ async function init() {
 
   // 3. Check auth
   const session = await getSession()
-  currentUser   = session?.user ?? null
-  isViewer      = !currentUser
+  currentUser = session?.user ?? null
+  isViewer = !currentUser
 
   // 4. Load data from Supabase
   await loadData()
@@ -1209,7 +1225,7 @@ async function init() {
   // 8. React to auth state changes (login / logout)
   onAuthChange(async (event, session) => {
     currentUser = session?.user ?? null
-    isViewer    = !currentUser
+    isViewer = !currentUser
 
     if (event === 'SIGNED_IN') {
       closeAuthModal()
