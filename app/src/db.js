@@ -186,11 +186,84 @@ export async function updateLinkOrder(id, order) {
 
 
 // ══════════════════════════════════════════════════════════════════════
+// IMPORT (additive only)
+// ══════════════════════════════════════════════════════════════════════
+
+const IMPORT_CHUNK = 500 // rows per bulk insert
+
+/**
+ * Import ONE sheet (with its folders and links) as brand-new rows.
+ *
+ * SAFETY CONTRACT: this function only ever INSERTs new rows. It never updates
+ * or deletes anything that existed before the import. The single UPDATE it can
+ * perform targets the sheet row it created a moment earlier: if something fails
+ * halfway, that new sheet is renamed "[incomplete] ..." so it is easy to spot.
+ * There is deliberately no delete anywhere in this function.
+ *
+ * sheet = { name, folders: [ { name, collapsed, links: [ { name, url, description } ] } ] }
+ * Imported sheets are always private (is_public = false).
+ *
+ * Returns { data: { sheetId, folders, links }, error: null } on success, or
+ * { data: null, error, sheetId? } on failure (sheetId = the partial new sheet).
+ */
+export async function importSheetTree(sheet, order) {
+  // 1. The sheet itself
+  const { data: newSheet, error: sheetErr } = await supabase
+    .from('sheets')
+    .insert({ name: sheet.name, order, last_edit_date: isoToday(), is_public: false })
+    .select()
+    .single()
+  if (sheetErr || !newSheet) {
+    return { data: null, error: sheetErr || new Error('The sheet could not be created.') }
+  }
+
+  // Something went wrong after the sheet exists: flag it, never remove it
+  const fail = async error => {
+    try {
+      await supabase.from('sheets').update({ name: `[incomplete] ${sheet.name}` }).eq('id', newSheet.id)
+    } catch (_) { /* best effort only */ }
+    return { data: null, error, sheetId: newSheet.id }
+  }
+
+  try {
+    // 2. Folders (one bulk insert); map position -> new folder id
+    const folderIds = []
+    if (sheet.folders.length) {
+      const rows = sheet.folders.map((f, i) => ({
+        sheet_id: newSheet.id, name: f.name, collapsed: f.collapsed, order: i
+      }))
+      const { data: made, error } = await supabase.from('folders').insert(rows).select('id, order')
+      if (error || !made || made.length !== rows.length) {
+        return fail(error || new Error('The folders could not be created.'))
+      }
+      made.forEach(r => { folderIds[r.order] = r.id })
+    }
+
+    // 3. Links (bulk inserts in chunks)
+    const linkRows = []
+    sheet.folders.forEach((f, i) => {
+      f.links.forEach((l, j) => {
+        linkRows.push({ folder_id: folderIds[i], name: l.name, url: l.url, description: l.description, order: j })
+      })
+    })
+    for (let i = 0; i < linkRows.length; i += IMPORT_CHUNK) {
+      const { error } = await supabase.from('links').insert(linkRows.slice(i, i + IMPORT_CHUNK))
+      if (error) return fail(error)
+    }
+
+    return { data: { sheetId: newSheet.id, folders: sheet.folders.length, links: linkRows.length }, error: null }
+  } catch (e) {
+    return fail(e)
+  }
+}
+
+
+// ══════════════════════════════════════════════════════════════════════
 // UTILITY
 // ══════════════════════════════════════════════════════════════════════
 
 function isoToday() {
-  const d  = new Date()
+  const d = new Date()
   const yy = d.getFullYear()
   const mm = String(d.getMonth() + 1).padStart(2, '0')
   const dd = String(d.getDate()).padStart(2, '0')

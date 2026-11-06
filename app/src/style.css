@@ -580,6 +580,16 @@ body,
   background: var(--rust2);
 }
 
+/* Same look as danger, for actions that are NOT destructive (e.g. Import) */
+.btn-accent {
+  background: var(--rust);
+  color: #fff;
+}
+
+.btn-accent:hover {
+  background: var(--rust2);
+}
+
 .btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;

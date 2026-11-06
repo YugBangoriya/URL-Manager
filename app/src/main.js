@@ -15,7 +15,8 @@ import {
   loadAllData,
   createSheet, renameSheet, deleteSheet, updateSheetOrder, touchSheet, setSheetPublic,
   createFolder, renameFolder, deleteFolder, updateFolderCollapsed, updateFolderOrder,
-  createLink, updateLink, deleteLink, updateLinkOrder
+  createLink, updateLink, deleteLink, updateLinkOrder,
+  importSheetTree
 } from './db.js'
 
 
@@ -122,6 +123,7 @@ const SVG_PLUS = `<svg width="12" height="12" viewBox="0 0 12 12" fill="none" st
 const SVG_SUN = `<svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="2.8"/><line x1="8" y1="1" x2="8" y2="2.6"/><line x1="8" y1="13.4" x2="8" y2="15"/><line x1="1" y1="8" x2="2.6" y2="8"/><line x1="13.4" y1="8" x2="15" y2="8"/><line x1="3.1" y1="3.1" x2="4.2" y2="4.2"/><line x1="11.8" y1="11.8" x2="12.9" y2="12.9"/><line x1="12.9" y1="3.1" x2="11.8" y2="4.2"/><line x1="4.2" y1="11.8" x2="3.1" y2="12.9"/></svg>`
 const SVG_MOON = `<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 10.5A6 6 0 0 1 5.5 2.5a6.1 6.1 0 1 0 8 8Z"/></svg>`
 const SVG_EXPORT = `<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M2 11v2a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-2"/><polyline points="5 7.5 8 10.5 11 7.5"/><line x1="8" y1="2" x2="8" y2="10.5"/></svg>`
+const SVG_IMPORT = `<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M2 11v2a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-2"/><polyline points="5 4.5 8 1.5 11 4.5"/><line x1="8" y1="11" x2="8" y2="1.5"/></svg>`
 const SVG_LOGOUT = `<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3H3a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h3"/><polyline points="11 11 14 8 11 5"/><line x1="14" y1="8" x2="6" y2="8"/></svg>`
 const SVG_LOGIN = `<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3h3a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1h-3"/><polyline points="7 11 4 8 7 5"/><line x1="4" y1="8" x2="12" y2="8"/></svg>`
 const SVG_GLOBE = `<svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6"/><path d="M2 8h12M8 2c-2 2-3 4-3 6s1 4 3 6M8 2c2 2 3 4 3 6s-1 4-3 6"/></svg>`
@@ -153,6 +155,28 @@ function showConfirm(title, msg, onOk, opts = {}) {
   const close = () => el.remove()
   el.querySelector('[data-r="cancel"]').onclick = close
   el.querySelector('[data-r="ok"]').onclick = () => { close(); onOk() }
+  el.addEventListener('click', e => { if (e.target === el) close() })
+  el.addEventListener('keydown', e => { if (e.key === 'Escape') close() })
+}
+
+// One-button message dialog (used for import results and errors).
+// title / msg are inserted as HTML, so callers must esc() any dynamic text.
+function showNotice(title, msg) {
+  const el = document.createElement('div')
+  el.className = 'dlg-overlay'
+  el.tabIndex = -1
+  el.innerHTML = `
+    <div class="dlg-box" role="dialog" aria-modal="true">
+      <div class="dlg-title">${title}</div>
+      <div class="dlg-msg">${msg}</div>
+      <div class="dlg-actions">
+        <button class="btn btn-accent" data-r="ok">OK</button>
+      </div>
+    </div>`
+  document.body.appendChild(el)
+  el.focus()
+  const close = () => el.remove()
+  el.querySelector('[data-r="ok"]').onclick = close
   el.addEventListener('click', e => { if (e.target === el) close() })
   el.addEventListener('keydown', e => { if (e.key === 'Escape') close() })
 }
@@ -295,6 +319,13 @@ function initTopActions() {
     expBtn.innerHTML = SVG_EXPORT
     expBtn.addEventListener('click', exportData)
 
+    // Import button (admin only): restores a backup by ADDING it, never replacing
+    const impBtn = document.createElement('button')
+    impBtn.className = 'tap-btn'
+    impBtn.title = 'Import a backup (adds it, replaces nothing)'
+    impBtn.innerHTML = SVG_IMPORT
+    impBtn.addEventListener('click', importData)
+
     // Logout button
     const outBtn = document.createElement('button')
     outBtn.className = 'tap-btn'
@@ -305,7 +336,7 @@ function initTopActions() {
       // onAuthChange handles the rest
     })
 
-    bar.append(expBtn, outBtn)
+    bar.append(expBtn, impBtn, outBtn)
   } else {
     // Login button (viewer mode)
     const inBtn = document.createElement('button')
@@ -372,6 +403,194 @@ function exportData() {
   a.click()
   document.body.removeChild(a)
   URL.revokeObjectURL(url)
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// IMPORT: restore from an exported .json file
+// ADDITIVE ONLY. Imported sheets are added as NEW private sheets at the end
+// of the tab bar. Nothing that already exists is updated, replaced or deleted.
+// Accepts exports from this version and from the original single-file version.
+// ══════════════════════════════════════════════════════════════════════
+
+const IMPORT_LIMITS = {
+  fileBytes: 5 * 1024 * 1024,
+  sheets: 100, folders: 1000, links: 10000,
+  name: 1000, url: 8000, description: 20000
+}
+let _importing = false
+
+// Text field: strings (and numbers) are fine, anything else means a damaged file
+function importText(v, max, what) {
+  if (v == null) return ''
+  if (typeof v === 'number') v = String(v)
+  if (typeof v !== 'string') throw new Error(`${what} is not in the expected format.`)
+  if (v.length > max) throw new Error(`${what} is unusually long (over ${max} characters).`)
+  return v
+}
+
+// Keep the original order (falls back to file position when a number is missing)
+function byOrder(list) {
+  return list
+    .map((x, i) => ({ x, i, o: Number.isFinite(Number(x && x.order)) && x.order !== null && x.order !== '' ? Number(x.order) : i }))
+    .sort((a, b) => a.o - b.o || a.i - b.i)
+    .map(e => e.x)
+}
+
+// Turn the raw file text into a clean { sheets, totals } or throw a readable Error.
+// Only known fields are read; everything else in the file is ignored.
+function parseImport(text) {
+  const L = IMPORT_LIMITS
+  let raw
+  try { raw = JSON.parse(text) } catch (_) {
+    throw new Error('This file is not valid JSON, so it cannot be a URL Manager export.')
+  }
+  if (!raw || typeof raw !== 'object' || !Array.isArray(raw.sheets)) {
+    throw new Error('This file does not look like a URL Manager export (no list of sheets found).')
+  }
+  if (raw.sheets.length > L.sheets) throw new Error(`This file has more than ${L.sheets} sheets.`)
+
+  let folderCount = 0, linkCount = 0
+  const sheets = byOrder(raw.sheets).map((sh, si) => {
+    if (!sh || typeof sh !== 'object') throw new Error(`Sheet ${si + 1} is not in the expected format.`)
+    const name = importText(sh.name, L.name, `The name of sheet ${si + 1}`).trim() || 'Untitled sheet'
+    const fl = sh.folders == null ? [] : sh.folders
+    if (!Array.isArray(fl)) throw new Error(`The folders of "${name}" are not in the expected format.`)
+
+    const folders = byOrder(fl).map((fo, fi) => {
+      if (!fo || typeof fo !== 'object') throw new Error(`Folder ${fi + 1} in "${name}" is not in the expected format.`)
+      const fname = importText(fo.name, L.name, `A folder name in "${name}"`).trim() || 'New Folder'
+      const ll = fo.links == null ? [] : fo.links
+      if (!Array.isArray(ll)) throw new Error(`The links in folder "${fname}" are not in the expected format.`)
+
+      const links = byOrder(ll).map(l => {
+        if (!l || typeof l !== 'object') throw new Error(`A link in folder "${fname}" is not in the expected format.`)
+        linkCount++
+        return {
+          name: importText(l.name, L.name, `A link name in "${fname}"`).trim(),
+          url: importText(l.url, L.url, `A link URL in "${fname}"`).trim(),
+          description: importText(l.description, L.description, `A link description in "${fname}"`)
+        }
+      })
+      folderCount++
+      return { name: fname, collapsed: fo.collapsed === true, links }
+    })
+    return { name, folders }
+  })
+
+  if (folderCount > L.folders) throw new Error(`This file has more than ${L.folders} folders.`)
+  if (linkCount > L.links) throw new Error(`This file has more than ${L.links} links.`)
+  return { sheets, totals: { sheets: sheets.length, folders: folderCount, links: linkCount } }
+}
+
+// Imported sheets never share a name with an existing (or earlier imported) sheet
+function uniqueSheetName(name, taken) {
+  const has = n => taken.has(n.toLowerCase())
+  let out = name
+  if (has(out)) {
+    out = `${name} (imported)`
+    for (let n = 2; has(out); n++) out = `${name} (imported ${n})`
+  }
+  taken.add(out.toLowerCase())
+  return out
+}
+
+// Small progress box shown while rows are being added
+function showProgress() {
+  const el = document.createElement('div')
+  el.className = 'dlg-overlay'
+  el.innerHTML = `
+    <div class="dlg-box" role="status" aria-live="polite">
+      <div class="dlg-title">Importing…</div>
+      <div class="dlg-msg" data-r="msg" style="margin-bottom:0"></div>
+    </div>`
+  document.body.appendChild(el)
+  const msg = el.querySelector('[data-r="msg"]')
+  return { set: t => { msg.textContent = t }, close: () => el.remove() }
+}
+
+const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`
+
+async function runImport(parsed) {
+  if (_importing || isViewer) return
+  _importing = true
+  const progress = showProgress()
+  const taken = new Set(state.sheets.map(s => String(s.name).toLowerCase()))
+  let order = state.sheets.reduce((mx, s) => Math.max(mx, Number(s.order) || 0), -1) + 1
+  let done = 0, folders = 0, links = 0, failure = null
+
+  for (const sheet of parsed.sheets) {
+    const name = uniqueSheetName(sheet.name, taken)
+    progress.set(`Sheet ${done + 1} of ${parsed.sheets.length}: ${name}`)
+    let res
+    try { res = await importSheetTree({ ...sheet, name }, order++) }
+    catch (e) { res = { data: null, error: e } }
+    if (res.error || !res.data) {
+      failure = { name, message: (res.error && res.error.message) || 'Unknown error', partial: !!res.sheetId }
+      break
+    }
+    done++; folders += res.data.folders; links += res.data.links
+  }
+
+  // Reload from the database so the screen shows exactly what was saved
+  await loadData()
+  renderAll()
+  progress.close()
+  _importing = false
+
+  const total = parsed.sheets.length
+  if (!failure) {
+    showNotice('Import complete',
+      `Added ${plural(done, 'sheet')}, ${plural(folders, 'folder')} and ${plural(links, 'link')}.<br><br>` +
+      `They are private and sit at the end of your tabs. Your existing data was not changed.`)
+  } else {
+    showNotice('Import stopped',
+      `${done} of ${total} sheets were imported before an error: ${esc(failure.message)}<br><br>` +
+      (failure.partial
+        ? `"${esc(failure.name)}" may be incomplete, so it was renamed with an [incomplete] prefix. Check it, then delete it or import again.<br><br>`
+        : '') +
+      `Your existing data was not changed.`)
+  }
+}
+
+// Reads the chosen file, validates it, then asks for confirmation. No data is touched until confirmed.
+function handleImportFile(file) {
+  if (file.size > IMPORT_LIMITS.fileBytes) {
+    showNotice('Import failed', 'This file is larger than 5 MB, which is far more than a URL Manager export needs.')
+    return
+  }
+  const reader = new FileReader()
+  reader.onerror = () => showNotice('Import failed', 'The file could not be read.')
+  reader.onload = () => {
+    let parsed
+    try { parsed = parseImport(String(reader.result)) }
+    catch (e) { showNotice('Import failed', `${esc(e.message)}<br><br>Nothing was changed.`); return }
+
+    const t = parsed.totals
+    if (!t.sheets) { showNotice('Nothing to import', 'This file contains no sheets.<br><br>Nothing was changed.'); return }
+    showConfirm('Import Backup',
+      `Add ${plural(t.sheets, 'sheet')} (${plural(t.folders, 'folder')}, ${plural(t.links, 'link')}) from "${esc(file.name)}"?<br><br>` +
+      `Your existing data stays exactly as it is. Nothing is replaced or deleted. ` +
+      `Imported sheets are added at the end of your tabs and start out private.`,
+      () => runImport(parsed),
+      { okLabel: 'Import', okClass: 'btn-accent' })
+  }
+  reader.readAsText(file)
+}
+
+function importData() {
+  if (isViewer) return
+  const input = document.createElement('input')
+  input.type = 'file'
+  input.accept = '.json,application/json'
+  input.style.display = 'none'
+  input.addEventListener('change', () => {
+    const file = input.files && input.files[0]
+    input.remove()
+    if (file) handleImportFile(file)
+  })
+  input.addEventListener('cancel', () => input.remove())
+  document.body.appendChild(input)
+  input.click()
 }
 
 
@@ -604,11 +823,19 @@ async function doDeleteLink(sheetId, folderId, linkId) {
 // CELL DISPLAY + INLINE EDITING
 // ══════════════════════════════════════════════════════════════════════
 
+// Only make a URL clickable when its scheme is safe. javascript:, data: and vbscript:
+// are shown as plain text instead (stored data is never changed). Browsers ignore tabs,
+// newlines and control characters inside a scheme, so those are stripped before checking.
+function isSafeHref(value) {
+  const compact = String(value).replace(/[\u0000-\u0020\u007f-\u009f]/g, '')
+  return !/^(javascript|data|vbscript):/i.test(compact)
+}
+
 function renderCellDisplay(cell, field, value) {
   cell.innerHTML = ''
   const inner = document.createElement('div')
   inner.className = 'lc-inner' + (value ? '' : ' ph')
-  if (field === 'url' && value) {
+  if (field === 'url' && value && isSafeHref(value)) {
     const a = Object.assign(document.createElement('a'), {
       href: value, target: '_blank', rel: 'noopener noreferrer', textContent: value
     })
