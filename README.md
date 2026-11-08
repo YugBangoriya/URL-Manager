@@ -46,7 +46,7 @@ URL Manager organises links in three levels. **Sheets** run along the bottom of 
 - Drag to reorder sheets, folders and links.
 - Every sheet shows when it was last edited, so it's easy to tell whether a backup is out of date.
 - Dark by default, with a light mode. Works on a phone.
-- Export everything as a JSON backup.
+- Export everything as a JSON backup, and import it back whenever you need to.
 
 ## It started as one HTML file
 
@@ -133,7 +133,7 @@ The complete walkthrough, including a table of everything that went wrong for me
 ## Things worth knowing
 
 - **Free Supabase projects pause after about a week of low activity.** If the live demo ever shows an error, that's the likely reason. One click in the Supabase dashboard brings it back with its data.
-- **The free plan has no automatic backups.** That's why Export exists. It saves everything as a JSON file. Importing a backup file back in is not built into this version yet.
+- **The free plan has no automatic backups.** That's why Export exists. It saves everything as a JSON file, and Import can bring it back. Import only ever adds: the file arrives as new private sheets at the end of your tabs, and nothing already in your library is replaced or deleted.
 - **Public means public.** Anything in a public sheet can be read by anyone with the link. Private sheets stay private.
 - **It is single-owner by design.** If you run your own copy, you are its only user.
 
